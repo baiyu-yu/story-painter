@@ -1,6 +1,7 @@
 import path from 'path'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import react from '@vitejs/plugin-react'
 import legacy from '@vitejs/plugin-legacy'
 
 import Components from 'unplugin-vue-components/vite'
@@ -13,11 +14,22 @@ export default defineConfig({
   resolve: {
     alias: {
       '~/': `${pathSrc}/`,
+      '@/': `${pathSrc}/vnve/editor/src/`,
+      '@vnve/core': `${pathSrc}/vnve/core/src`,
     },
   },
   base: './',
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        vnve: path.resolve(__dirname, 'vnve.html'),
+      },
+    },
+  },
   plugins: [
     vue(),
+    react(),
     Components({
       // allow auto load markdown components under `./src/components/`
       extensions: ['vue', 'md'],

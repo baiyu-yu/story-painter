@@ -68,60 +68,87 @@
                              <n-button text @click="refreshColors">刷新色板</n-button>
                          </n-flex>
                        </n-tab-pane>
+                       <n-tab-pane name="tools" tab="工具箱">
+                          <div class="hand-drawn-box p-4 cursor-pointer hover:bg-gray-50 transition-colors" @click="openVnve">
+                             <n-flex align="center" justify="space-between">
+                                <n-flex align="center">
+                                  <n-icon size="24"><icon-video /></n-icon>
+                                  <span class="text-lg font-bold">视频生成器 (VNVE)</span>
+                                </n-flex>
+                                <n-icon size="20"><icon-arrow-right /></n-icon>
+                             </n-flex>
+                             <div class="text-gray-500 text-sm mt-1">
+                               将Log转化为视频，支持骰子演出效果
+                             </div>
+                          </div>
+                       </n-tab-pane>
                      </n-tabs>
                   </n-drawer-content>
                </n-drawer>
             </div>
 
-            <!-- PC: Settings Inline -->
-            <div v-if="notMobile" class="hand-drawn-box p-4 flex-shrink-0">
-               <n-divider title-placement="left">设置</n-divider>
-               <div class="max-h-[200px] overflow-y-auto">
-                 <option-view></option-view>
-               </div>
+            <!-- PC: Tabbed Interface -->
+            <div v-if="notMobile" class="hand-drawn-box p-2 flex-grow flex flex-col min-h-0 h-full">
+               <n-tabs type="line" class="h-full flex flex-col" pane-class="flex-grow overflow-auto min-h-0 p-2">
+                  <n-tab-pane name="settings" tab="设置">
+                     <div class="p-2">
+                       <option-view></option-view>
+                     </div>
+                  </n-tab-pane>
+                  <n-tab-pane name="roles" tab="角色分配">
+                     <n-text type="info" italic class="block text-center my-1 flex-shrink-0">SealDice骰QQ群 524364253</n-text>
+                     <div class="pc-list">
+                        <div v-for="(i, index) in store.pcList" :key="index" class="mb-2 w-full">
+                          <div class="pc-card hand-drawn-box p-3">
+                            <div class="pc-item-grid">
+                              <n-button type="error" size="small" secondary @click="deletePc(index, i)"
+                                :disabled="!notMobile && (isShowPreview || isShowPreviewBBS || isShowPreviewBBSPineapple || isShowPreviewTRG)">
+                                <template #icon>
+                                  <n-icon><icon-delete></icon-delete></n-icon>
+                                </template>
+                                <span v-if="notMobile">删除</span>
+                              </n-button>
+          
+                              <n-input :disabled="!notMobile && (isShowPreview || isShowPreviewBBS || isShowPreviewBBSPineapple || isShowPreviewTRG)"
+                                v-model:value="i.name" :prefix-icon="User" @focus="nameFocus(i)"
+                                @change="nameChanged(i)" placeholder="角色名" />
+          
+                              <n-input :disabled="true" v-model:value="i.IMUserId" placeholder="账号" />
+          
+                              <n-select v-model:value="i.role" class="pc-role-select"
+                              :options="[{ value: '主持人', label: '主持人' }, { value: '角色', label: '角色' }, { value: '骰子', label: '骰子' }, { value: '隐藏', label: '隐藏' }]" />
+          
+                              <n-color-picker v-model:value="i.color" :show-alpha="false" show-preview :swatches="colors"
+                                :on-update:value="(v) => colorChanged(v, i)" />
+                            </div>
+                          </div>
+                        </div>
+                     </div>
+                     <n-flex justify="center" class="mt-2 flex-shrink-0">
+                        <n-tooltip trigger="hover">
+                          <template #trigger>
+                            <n-button text @click="refreshColors">刷新色板</n-button>
+                          </template>
+                          重新随机生成上方颜色选择中的预置颜色
+                        </n-tooltip>
+                     </n-flex>
+                  </n-tab-pane>
+                  <n-tab-pane name="tools" tab="工具箱">
+                      <div class="hand-drawn-box p-4 cursor-pointer hover:bg-gray-50 transition-colors" @click="openVnve">
+                         <n-flex align="center" justify="space-between">
+                            <n-flex align="center">
+                              <n-icon size="24"><icon-video /></n-icon>
+                              <span class="text-lg font-bold">视频生成器 (VNVE)</span>
+                            </n-flex>
+                            <n-icon size="20"><icon-arrow-right /></n-icon>
+                         </n-flex>
+                         <div class="text-gray-500 text-sm mt-1">
+                           将Log转化为视频，支持骰子演出效果
+                         </div>
+                      </div>
+                  </n-tab-pane>
+               </n-tabs>
             </div>
-
-            <!-- PC List -->
-            <div v-if="notMobile" class="hand-drawn-box p-4 flex-grow flex flex-col min-h-0">
-              <n-text type="info" italic class="block text-center my-1 flex-shrink-0">SealDice骰QQ群 524364253</n-text>
-              <div class="pc-list flex-grow overflow-y-auto min-h-0">
-                <div v-for="(i, index) in store.pcList" :key="index" class="mb-2 w-full">
-                  <div class="pc-card hand-drawn-box p-3">
-                    <div class="pc-item-grid">
-                      <n-button type="error" size="small" secondary @click="deletePc(index, i)"
-                        :disabled="!notMobile && (isShowPreview || isShowPreviewBBS || isShowPreviewBBSPineapple || isShowPreviewTRG)">
-                        <template #icon>
-                          <n-icon><icon-delete></icon-delete></n-icon>
-                        </template>
-                        <span v-if="notMobile">删除</span>
-                      </n-button>
-  
-                      <n-input :disabled="!notMobile && (isShowPreview || isShowPreviewBBS || isShowPreviewBBSPineapple || isShowPreviewTRG)"
-                        v-model:value="i.name" :prefix-icon="User" @focus="nameFocus(i)"
-                        @change="nameChanged(i)" placeholder="角色名" />
-  
-                      <n-input :disabled="true" v-model:value="i.IMUserId" placeholder="账号" />
-  
-                      <n-select v-model:value="i.role" class="pc-role-select"
-                      :options="[{ value: '主持人', label: '主持人' }, { value: '角色', label: '角色' }, { value: '骰子', label: '骰子' }, { value: '隐藏', label: '隐藏' }]" />
-  
-                      <n-color-picker v-model:value="i.color" :show-alpha="false" show-preview :swatches="colors"
-                        :on-update:value="(v) => colorChanged(v, i)" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <n-flex justify="center" class="mt-2 flex-shrink-0">
-                 <n-tooltip trigger="hover">
-                   <template #trigger>
-                     <n-button text @click="refreshColors">刷新色板</n-button>
-                   </template>
-                   重新随机生成上方颜色选择中的预置颜色
-                 </n-tooltip>
-              </n-flex>
-            </div>
-
-            
 
           </div>
 
@@ -165,6 +192,7 @@
                       <!-- Preview Format Tabs -->
                       <n-tabs v-if="notMobile && modeMain === 'preview'" type="line" animated v-model:value="activeTab" @update:value="handleTabChange">
                           <n-tab-pane name="preview" tab="预览" />
+                          <n-tab-pane name="role" tab="角色" />
                           <n-tab-pane name="bbs" tab="论坛" />
                           <n-tab-pane name="bbspineapple" tab="论坛(多行)" />
                           <n-tab-pane name="trg" tab="回声工坊" />
@@ -174,6 +202,7 @@
                       <div v-else-if="modeMain === 'preview'" class="flex flex-col gap-2">
                           <div class="flex flex-wrap gap-2 justify-center">
                               <n-checkbox label="预览" v-model:checked="isShowPreview" :border="true" @click="previewClick('preview')" />
+                              <n-checkbox label="角色" v-model:checked="isShowPreviewRole" :border="true" @click="previewClick('role')" />
                               <n-checkbox label="论坛" v-model:checked="isShowPreviewBBS" :border="true" @click="previewClick('bbs')" />
                               <n-checkbox label="多行" v-model:checked="isShowPreviewBBSPineapple" :border="true" @click="previewClick('bbspineapple')" />
                               <n-checkbox label="TRG" v-model:checked="isShowPreviewTRG" :border="true" @click="previewClick('trg')" />
@@ -194,6 +223,7 @@
                   <div v-show="modeMain === 'preview'" class="flex-grow overflow-auto relative border-t border-dashed border-gray-300 pt-2">
                       <n-message-provider>
                         <preview-main :is-show="notMobile ? activeTab === 'preview' : isShowPreview" :preview-items="previewItems"></preview-main>
+                        <preview-role :is-show="notMobile ? activeTab === 'role' : isShowPreviewRole" :preview-items="previewItems"></preview-role>
                         <preview-bbs :is-show="notMobile ? activeTab === 'bbs' : isShowPreviewBBS" :preview-items="previewItems"></preview-bbs>
                         <preview-bbs-pineapple :is-show="notMobile ? activeTab === 'bbspineapple' : isShowPreviewBBSPineapple"
                           :preview-items="previewItems"></preview-bbs-pineapple>
@@ -223,6 +253,7 @@ import { logMan } from './logManager/logManager'
 import { ViewUpdate } from "@codemirror/view";
 import { TextInfo } from "./logManager/importers/_logImpoter";
 import previewMain from "./components/previews/preview-main.vue";
+import previewRole from "./components/previews/preview-role.vue";
 import previewBbs from "./components/previews/preview-bbs.vue";
 import previewBbsPineapple from "./components/previews/preview-bbs-pineapple.vue";
 import previewTrg from "./components/previews/preview-trg.vue";
@@ -232,7 +263,7 @@ import { LogItem, CharItem, packNameId } from "./logManager/types";
 import { setCharInfo } from './logManager/importers/_logImpoter'
 import { msgCommandFormat, msgImageFormat, msgIMUseridFormat, msgOffTopicFormat, msgAtFormat } from "./utils";
 import { NButton, NText, useMessage, useModal, useNotification, NDrawer, NDrawerContent, NFloatButton, NTabs, NTabPane, NGrid, NGridItem } from "naive-ui";
-import { User, LogoGithub, Delete as IconDelete, Settings, Menu } from '@vicons/carbon'
+import { User, LogoGithub, Delete as IconDelete, Settings, Menu, Video as IconVideo, ArrowRight as IconArrowRight } from '@vicons/carbon'
 import { breakpointsTailwind, useBreakpoints, useDark, useToggle } from '@vueuse/core'
 import OptionView from "./components/OptionView.vue";
 import randomColor from "randomcolor";
@@ -265,6 +296,7 @@ const isShowPreview = ref(false)
 const isShowPreviewBBS = ref(false)
 const isShowPreviewBBSPineapple = ref(false)
 const isShowPreviewTRG = ref(false)
+const isShowPreviewRole = ref(false)
 
 const showSettings = ref(false)
 const activeTab = ref('preview')
@@ -273,6 +305,7 @@ const modeMain = ref<'editor' | 'preview'>('editor')
 const handleTabChange = (val: string) => {
   activeTab.value = val
   if (val === 'preview') previewClick('preview')
+  else if (val === 'role') previewClick('role')
   else if (val === 'bbs') previewClick('bbs')
   else if (val === 'bbspineapple') previewClick('bbspineapple')
   else if (val === 'trg') previewClick('trg')
@@ -283,6 +316,7 @@ const closePreviewMobile = () => {
   isShowPreviewBBS.value = false
   isShowPreviewBBSPineapple.value = false
   isShowPreviewTRG.value = false
+  isShowPreviewRole.value = false
 }
 
 const rebuildAll = () => {
@@ -327,6 +361,36 @@ const backV1 = () => {
   location.href = 'https://dice.weizaima.com';
 }
 
+const openVnve = () => {
+  showPreview();
+  const data = {
+    logs: previewItems.value,
+    characters: store.pcList
+  };
+  localStorage.setItem('vnve_import_data', JSON.stringify(data));
+
+  // Generate Script Text for Text2Scene
+  let scriptText = "标题\n跑团记录\n\n";
+  scriptText += "场景\n默认背景\n\n";
+
+  for (const item of previewItems.value) {
+      if (store.isHiddenLogItem(item)) continue;
+      
+      const name = item.nickname || "未知";
+      let msg = item.message;
+      // Simple strip of CQ codes for script
+      // 过滤掉所有CQ码，包括图片、表情等
+      // 过滤掉所有mirai:image等标签
+      msg = msg.replace(/\[CQ:.*?\]/g, '').replace(/\[mirai:.*?\]/g, ''); 
+      if (!msg.trim()) continue;
+
+      scriptText += `${name}\n${msg}\n\n`;
+  }
+
+  localStorage.setItem('vnve_script_text', scriptText);
+  window.open('/vnve.html', '_blank');
+}
+
 // 清空文本
 const clearText = () => {
   store.editor.dispatch({
@@ -339,9 +403,16 @@ const doFlush = () => {
   logMan.flush();
 }
 
-const previewClick = (mode: 'preview' | 'bbs' | 'bbspineapple' | 'trg') => {
+const previewClick = (mode: 'preview' | 'role' | 'bbs' | 'bbspineapple' | 'trg') => {
   switch (mode) {
     case 'preview':
+      isShowPreviewBBS.value = false
+      isShowPreviewBBSPineapple.value = false
+      isShowPreviewTRG.value = false
+      isShowPreviewRole.value = false
+      break;
+    case 'role':
+      isShowPreview.value = false
       isShowPreviewBBS.value = false
       isShowPreviewBBSPineapple.value = false
       isShowPreviewTRG.value = false
@@ -350,18 +421,21 @@ const previewClick = (mode: 'preview' | 'bbs' | 'bbspineapple' | 'trg') => {
       isShowPreview.value = false
       isShowPreviewBBSPineapple.value = false
       isShowPreviewTRG.value = false
+      isShowPreviewRole.value = false
       store.exportOptions.imageHide = true
       break;
     case 'bbspineapple':
       isShowPreview.value = false
       isShowPreviewBBS.value = false
       isShowPreviewTRG.value = false
+      isShowPreviewRole.value = false
       store.exportOptions.imageHide = true
       break;
     case 'trg':
       isShowPreview.value = false
       isShowPreviewBBS.value = false
       isShowPreviewBBSPineapple.value = false
+      isShowPreviewRole.value = false
       store.exportOptions.imageHide = true
       break;
   }

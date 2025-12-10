@@ -33,6 +33,7 @@ declare module 'vue' {
     PreviewBbsPineappleItem: typeof import('./components/previews/preview-bbs-pineapple-item.vue')['default']
     PreviewMain: typeof import('./components/previews/preview-main.vue')['default']
     PreviewMainItem: typeof import('./components/previews/preview-main-item.vue')['default']
+    PreviewRole: typeof import('./components/previews/preview-role.vue')['default']
     PreviewTableTr: typeof import('./components/previews/preview-table-tr.vue')['default']
     PreviewTrg: typeof import('./components/previews/preview-trg.vue')['default']
     PreviewTrgItem: typeof import('./components/previews/preview-trg-item.vue')['default']

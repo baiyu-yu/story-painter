@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VNVE - 视觉小说视频编辑器</title>
+    <meta name="description" content="为视觉小说（互动视频、GalGame）量身定制的视频创作工具，在你的浏览器上立刻开始视频创作！">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <style>
+      #loader, #sw-loader {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 99999;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 100vh;
+        background-color: #ffffff;
+      }
+      #sw-loader {
+        z-index: 99998;
+      }
+      .loader {
+        width: 48px;
+        height: 48px;
+        border: 5px solid #000;
+        border-bottom-color: transparent;
+        border-radius: 50%;
+        display: inline-block;
+        box-sizing: border-box;
+        animation: rotation 1s linear infinite;
+        margin-bottom: 16px;
+      }
+
+      @keyframes rotation {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
+      }
+    </style>
+    <script>
+      function removeServiceWorkerLoader() {
+        const swLoader = document.getElementById("sw-loader");
+        if (swLoader) document.body.removeChild(swLoader);
+      }
+
+      // 注册sw.js
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", function () {
+          navigator.serviceWorker.register("/sw.js").then(
+            function (registration) {
+              if (registration.active) {
+                removeServiceWorkerLoader();
+              } else {
+                navigator.serviceWorker.addEventListener("controllerchange", () => {
+                  removeServiceWorkerLoader();
+                });
+              }
+            },
+            function () {
+              const swTip = document.getElementById("sw-tip");
+              if (swTip) swTip.innerText = "sw装载失败，请刷新重试";
+            },
+          );
+        });
+      } else {
+        window.addEventListener("DOMContentLoaded", function () {
+          const swTip = document.getElementById("sw-tip");
+          if (swTip) swTip.innerText = "当前浏览器不支持sw，请更换浏览器";
+        });
+      }
+    </script>
+  </head>
+  <body>
+    <div id="loader">
+      <span class="loader"></span>
+      <span style="font-size: 16px;">首次访问速度较慢，请耐心等待...</span>
+      <span style="font-size: 14px;">（建议使用科学上网，获得最佳体验）</span>
+    </div>
+    <div id="sw-loader">
+      <span class="loader"></span>
+      <span id="sw-tip" style="font-size: 16px;">资源装载中，请耐心等待...</span>
+    </div>
+    <div id="root"></div>
+    <script>
+      window.addEventListener("DOMContentLoaded", function () {
+        const loader = document.getElementById("loader");
+        if (loader) document.body.removeChild(loader);
+      });
+    </script>
+    <script type="module" src="/src/vnve/editor/src/main.tsx"></script>
+  </body>
+</html>

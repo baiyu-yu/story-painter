@@ -4,7 +4,7 @@
     "target": "esnext",
     "useDefineForClassFields": true,
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "strict": true,
     "jsx": "preserve",
     "sourceMap": true,
@@ -13,7 +13,9 @@
     "lib": ["esnext", "dom"],
     "paths": {
       "hyperparam":["node_modules/hyperparam/lib/index.d.ts"],
-      "~/*": ["src/*"]
+      "~/*": ["src/*"],
+      "@/*": ["src/vnve/editor/src/*"],
+      "@vnve/core": ["src/vnve/core/src"]
     },
     "skipLibCheck": true
   },
@@ -23,5 +25,8 @@
     "src/**/*.d.ts",
     "src/**/*.tsx",
     "src/**/*.vue"
+  ],
+  "exclude": [
+    "src/vnve/**/*"
   ]
 }

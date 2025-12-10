@@ -1,6 +1,6 @@
 <template>
   <!-- 这句是为了防止空元素占行 -->
-  <div class="list-item-dynamic">
+  <div class="list-item-dynamic" :class="{ 'dice-item': source.isDice }">
     <!-- {{  source  }} -->
     <span style="color: #aaa" class="_time" v-if="!store.exportOptions.timeHide">{{ timeSolve(source) }}</span>
     <span :style="{ 'color': colorByName(source) }" class="_nickname">{{ nicknameSolve(source) }}</span>
@@ -96,3 +96,13 @@ const previewMessageSolve = (i: LogItem) => {
   return msg.replaceAll('<br />', '\n').replaceAll(/\n([^\n]+)/g, `<p style="text-indent: ${length}px; margin-top: 0; margin-bottom: 0">$1</p>`)
 }
 </script>
+
+<style scoped>
+.dice-item {
+  background-color: rgba(128, 128, 128, 0.1);
+  border-radius: 4px;
+  padding-left: 4px;
+  padding-right: 4px;
+  font-family: monospace;
+}
+</style>
