@@ -136,7 +136,7 @@ export const useStore = defineStore('main', {
 
     async tryFetchLog(key: string, password: string) {
       // https://weizaima.com/dice
-      const resp = await axios.get('https://weizaima.com/dice/api/load_data', {
+      const resp = await axios.get('https://logbackend.fishwhite.top/dice/api/load_data', {
         params: { key, password }
       })
       return resp.data

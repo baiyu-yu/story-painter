@@ -1,6 +1,8 @@
 <template>
-  <n-layout>
-    <n-layout-header class="bg-slate-100 dark:bg-inherit">
+  <n-layout class="hand-drawn-theme min-h-screen bg-transparent font-hand relative overflow-hidden">
+    
+
+    <n-layout-header class="bg-transparent z-10 relative">
       <n-flex class="py-3 text-2xl" size="large" align="center" justify="center" wrap>
         <n-flex align="center" justify="center">
           <strong>海豹TRPG跑团Log着色器</strong>
@@ -16,96 +18,193 @@
         </n-flex>
       </n-flex>
     </n-layout-header>
-    <n-layout-content class="bg-slate-100 dark:bg-inherit">
-      <div style="width: 1000px; margin: 0 auto; max-width: 100%; padding-bottom: 3rem">
-        <n-text type="info" italic class="block text-center my-1">SealDice骰QQ群 524364253 [群介绍中有其余3群]</n-text>
-        <option-view></option-view>
-        <n-spin :show="loading">
-          <template #description>
-            正在试图加载远程记录……
-          </template>
-          <div class="pc-list">
-            <div v-for="(i, index) in store.pcList">
-              <div style="display: flex; align-items: center; width: 26rem;">
-                <n-button type="error" size="small" secondary style="padding: 0 1rem " @click="deletePc(index, i)"
-                  :disabled="isShowPreview || isShowPreviewBBS || isShowPreviewBBSPineapple || isShowPreviewTRG">
-                  <template #icon>
-                    <n-icon>
-                      <icon-delete></icon-delete>
-                    </n-icon>
-                  </template>
-                  <span v-if="notMobile">删除</span>
-                </n-button>
-
-                <n-input :disabled="isShowPreview || isShowPreviewBBS || isShowPreviewBBSPineapple || isShowPreviewTRG"
-                  v-model:value="i.name" class="w-50 m-2" :prefix-icon="User" @focus="nameFocus(i)"
-                  @change="nameChanged(i)" />
-
-                <n-input :disabled="true" v-model:value="i.IMUserId" style="width: 24rem" />
-
-                <n-select v-model:value="i.role" class="m-2 w-60" style="width: 24rem"
-                  :options="[{ value: '主持人', label: '主持人' }, { value: '角色', label: '角色' }, { value: '骰子', label: '骰子' }, { value: '隐藏', label: '隐藏' }]" />
-
-                <n-color-picker v-model:value="i.color" :show-alpha="false" show-preview :swatches="colors"
-                  :on-update:value="(v) => colorChanged(v, i)" />
-              </div>
+    
+    <n-layout-content class="bg-transparent z-10 relative p-0 md:p-4">
+      <n-spin :show="loading">
+        <template #description>
+          正在试图加载远程记录……
+        </template>
+        
+        <div class="flex flex-col md:flex-row h-[calc(100vh-80px)] overflow-hidden gap-4">
+          
+          <!-- LEFT PANEL (Mobile: Main View, PC: Editor/Settings) -->
+          <div class="w-full md:w-5/12 flex flex-col gap-4 overflow-y-auto md:pr-2 left-col" v-show="notMobile">
+            
+            <!-- Mobile: Settings Button & Drawer -->
+            <div v-if="!notMobile">
+               <n-drawer v-model:show="showSettings" placement="bottom" height="70vh" class="hand-drawn-drawer rounded-t-2xl">
+                  <n-drawer-content title="设置与角色" closable>
+                     <n-tabs type="line">
+                       <n-tab-pane name="settings" tab="设置">
+                         <option-view></option-view>
+                       </n-tab-pane>
+                       <n-tab-pane name="roles" tab="角色分配">
+                         <n-text type="info" italic class="block text-center my-1">SealDice骰QQ群 524364253</n-text>
+                         <div class="pc-list">
+                            <div v-for="(i, index) in store.pcList" :key="index" class="mb-2 w-full">
+                              <div class="pc-card hand-drawn-box p-3">
+                                <div class="pc-item-grid">
+                                  <n-button type="error" size="small" secondary @click="deletePc(index, i)">
+                                    <template #icon>
+                                      <n-icon><icon-delete></icon-delete></n-icon>
+                                    </template>
+                                  </n-button>
+              
+                                  <n-input v-model:value="i.name" :prefix-icon="User" @focus="nameFocus(i)"
+                                    @change="nameChanged(i)" placeholder="角色名" />
+              
+                                  <n-input :disabled="true" v-model:value="i.IMUserId" placeholder="账号" />
+              
+                                  <n-select v-model:value="i.role" class="pc-role-select"
+                                  :options="[{ value: '主持人', label: '主持人' }, { value: '角色', label: '角色' }, { value: '骰子', label: '骰子' }, { value: '隐藏', label: '隐藏' }]" />
+              
+                                  <n-color-picker v-model:value="i.color" :show-alpha="false" show-preview :swatches="colors"
+                                    :on-update:value="(v) => colorChanged(v, i)" />
+                                </div>
+                              </div>
+                            </div>
+                         </div>
+                         <n-flex justify="center" class="mt-2">
+                             <n-button text @click="refreshColors">刷新色板</n-button>
+                         </n-flex>
+                       </n-tab-pane>
+                     </n-tabs>
+                  </n-drawer-content>
+               </n-drawer>
             </div>
+
+            <!-- PC: Settings Inline -->
+            <div v-if="notMobile" class="hand-drawn-box p-4 flex-shrink-0">
+               <n-divider title-placement="left">设置</n-divider>
+               <div class="max-h-[200px] overflow-y-auto">
+                 <option-view></option-view>
+               </div>
+            </div>
+
+            <!-- PC List -->
+            <div v-if="notMobile" class="hand-drawn-box p-4 flex-grow flex flex-col min-h-0">
+              <n-text type="info" italic class="block text-center my-1 flex-shrink-0">SealDice骰QQ群 524364253</n-text>
+              <div class="pc-list flex-grow overflow-y-auto min-h-0">
+                <div v-for="(i, index) in store.pcList" :key="index" class="mb-2 w-full">
+                  <div class="pc-card hand-drawn-box p-3">
+                    <div class="pc-item-grid">
+                      <n-button type="error" size="small" secondary @click="deletePc(index, i)"
+                        :disabled="!notMobile && (isShowPreview || isShowPreviewBBS || isShowPreviewBBSPineapple || isShowPreviewTRG)">
+                        <template #icon>
+                          <n-icon><icon-delete></icon-delete></n-icon>
+                        </template>
+                        <span v-if="notMobile">删除</span>
+                      </n-button>
+  
+                      <n-input :disabled="!notMobile && (isShowPreview || isShowPreviewBBS || isShowPreviewBBSPineapple || isShowPreviewTRG)"
+                        v-model:value="i.name" :prefix-icon="User" @focus="nameFocus(i)"
+                        @change="nameChanged(i)" placeholder="角色名" />
+  
+                      <n-input :disabled="true" v-model:value="i.IMUserId" placeholder="账号" />
+  
+                      <n-select v-model:value="i.role" class="pc-role-select"
+                      :options="[{ value: '主持人', label: '主持人' }, { value: '角色', label: '角色' }, { value: '骰子', label: '骰子' }, { value: '隐藏', label: '隐藏' }]" />
+  
+                      <n-color-picker v-model:value="i.color" :show-alpha="false" show-preview :swatches="colors"
+                        :on-update:value="(v) => colorChanged(v, i)" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <n-flex justify="center" class="mt-2 flex-shrink-0">
+                 <n-tooltip trigger="hover">
+                   <template #trigger>
+                     <n-button text @click="refreshColors">刷新色板</n-button>
+                   </template>
+                   重新随机生成上方颜色选择中的预置颜色
+                 </n-tooltip>
+              </n-flex>
+            </div>
+
+            
+
           </div>
 
-          <n-flex size="small" justify="center" align="center" class="my-4">
-            <n-flex size="small" justify="center" align="center" class="mr-2">
-              <n-button secondary type="primary" @click="exportRecordRaw">下载原始文件</n-button>
-              <!-- <n-button secondary type="primary" v-show="false" @click="exportRecordQQ">下载QQ风格记录</n-button>-->
-              <!-- <n-button secondary type="primary" v-show="false" @click="exportRecordIRC">下载IRC风格记录</n-button>-->
-              <n-button secondary type="primary" @click="exportRecordDOC">下载带图doc</n-button>
-              <n-button secondary type="primary" @click="exportRecordTalkDOC">下载对话doc</n-button>
-              <n-button secondary type="primary" @click="exportRecordDocx">下载docx</n-button>
-            </n-flex>
-            <!-- <n-button @click="showPreview">预览</n-button> -->
-            <div>
-              <n-checkbox label="预览" v-model:checked="isShowPreview" :border="true" @click="previewClick('preview')" />
-              <n-checkbox label="论坛代码" v-model:checked="isShowPreviewBBS" :border="true" @click="previewClick('bbs')" />
-              <n-checkbox label="论坛代码(内容多行)" v-model:checked="isShowPreviewBBSPineapple" :border="true"
-                @click="previewClick('bbspineapple')" />
-              <n-checkbox label="回声工坊" v-model:checked="isShowPreviewTRG" :border="true" @click="previewClick('trg')" />
-            </div>
-            <n-divider vertical />
-            <div>
-              <n-tooltip class="box-item" placement="top-start">
-                <template #trigger>
-                  <n-button type="primary" text @click="refreshColors">刷新色板</n-button>
-                </template>
-                重新随机生成上方颜色选择中的预置颜色
-              </n-tooltip>
-            </div>
-          </n-flex>
+          <!-- RIGHT PANEL (Preview) -->
+          <div class="w-full md:w-7/12 flex flex-col h-full overflow-hidden p-2 md:p-0">
+              
+              <div class="hand-drawn-box p-4 h-full flex flex-col relative overflow-hidden">
+                  <!-- Decorative watermarks inside card -->
+                  <img :src="GourdSvg" class="decor-gourd absolute pointer-events-none opacity-15 mix-blend-multiply" />
+                  <img :src="FishSvg" class="decor-fish absolute pointer-events-none opacity-15 mix-blend-multiply" />
+                  <img :src="CatSvg" class="decor-cat absolute pointer-events-none opacity-15 mix-blend-multiply" />
 
-          <code-mirror v-show="!(isShowPreview || isShowPreviewBBS || isShowPreviewBBSPineapple || isShowPreviewTRG)"
-            ref="editor" class="mt-4" @change="onChange">
-            <div class="z-50 absolute right-2 flex flex-col items-center">
-              <div class="">
-                <n-button secondary @click="clearText" id="btnCopyPreviewBBS" type="primary" class="w-full">清空内容
-                </n-button>
-              </div>
-              <div class="mt-1">
-                <n-button secondary @click="doFlush" type="primary" class="w-full">强制刷新</n-button>
-              </div>
-              <div class="mt-1">
-                <n-checkbox label="编辑器染色" v-model:checked="store.doEditorHighlight" :border="false" class="w-full"
-                  @click.native="doEditorHighlightClick($event)" />
-              </div>
-            </div>
-          </code-mirror>
+                  <!-- Mobile Float Button for Settings -->
+                  <div v-if="!notMobile">
+                     <n-float-button @click="showSettings = true" :right="20" :bottom="100" type="primary" class="z-50">
+                        <n-icon><Settings /></n-icon>
+                     </n-float-button>
+                  </div>
 
-          <n-message-provider>
-            <preview-main :is-show="isShowPreview" :preview-items="previewItems"></preview-main>
-            <preview-bbs :is-show="isShowPreviewBBS" :preview-items="previewItems"></preview-bbs>
-            <preview-bbs-pineapple :is-show="isShowPreviewBBSPineapple"
-              :preview-items="previewItems"></preview-bbs-pineapple>
-            <preview-trg :is-show="isShowPreviewTRG" :preview-items="previewItems"></preview-trg>
-          </n-message-provider>
-        </n-spin>
-      </div>
+                  <!-- Mode Tabs -->
+                  <n-tabs type="line" v-model:value="modeMain" animated>
+                    <n-tab-pane name="editor" tab="编辑器" />
+                    <n-tab-pane name="preview" tab="预览" />
+                  </n-tabs>
+
+                  <!-- Editor Panel -->
+                  <div v-show="modeMain === 'editor'" class="editor-wrap hand-drawn-box p-2 mb-3 flex flex-col relative min-h-[240px] overflow-hidden">
+                    <code-mirror ref="editor" class="h-full flex-grow" @change="onChange">
+                      <div class="z-50 absolute right-2 flex flex-col items-center top-2 gap-2">
+                         <n-button secondary @click="clearText" type="primary" size="small" class="w-full opacity-80 hover:opacity-100">清空</n-button>
+                         <n-button secondary @click="doFlush" type="primary" size="small" class="w-full opacity-80 hover:opacity-100">刷新</n-button>
+                         <div class="rounded p-1 bg-white/70 dark:bg-[#1e233c]/70">
+                            <n-checkbox label="染色" v-model:checked="store.doEditorHighlight" :border="false"
+                              @click.native="doEditorHighlightClick($event)" />
+                         </div>
+                      </div>
+                    </code-mirror>
+                  </div>
+                  <!-- Controls -->
+                  <div class="mb-2">
+                      <!-- Preview Format Tabs -->
+                      <n-tabs v-if="notMobile && modeMain === 'preview'" type="line" animated v-model:value="activeTab" @update:value="handleTabChange">
+                          <n-tab-pane name="preview" tab="预览" />
+                          <n-tab-pane name="bbs" tab="论坛" />
+                          <n-tab-pane name="bbspineapple" tab="论坛(多行)" />
+                          <n-tab-pane name="trg" tab="回声工坊" />
+                      </n-tabs>
+
+                      <!-- Mobile Controls -->
+                      <div v-else-if="modeMain === 'preview'" class="flex flex-col gap-2">
+                          <div class="flex flex-wrap gap-2 justify-center">
+                              <n-checkbox label="预览" v-model:checked="isShowPreview" :border="true" @click="previewClick('preview')" />
+                              <n-checkbox label="论坛" v-model:checked="isShowPreviewBBS" :border="true" @click="previewClick('bbs')" />
+                              <n-checkbox label="多行" v-model:checked="isShowPreviewBBSPineapple" :border="true" @click="previewClick('bbspineapple')" />
+                              <n-checkbox label="TRG" v-model:checked="isShowPreviewTRG" :border="true" @click="previewClick('trg')" />
+                          </div>
+                          <n-button type="warning" dashed block @click="closePreviewMobile">返回编辑</n-button>
+                      </div>
+
+                      <!-- Export Buttons -->
+                      <n-flex v-show="modeMain === 'preview'" size="small" justify="center" align="center" class="mt-2 flex-wrap">
+                          <n-button secondary type="primary" size="small" @click="exportRecordRaw">原始</n-button>
+                          <n-button secondary type="primary" size="small" @click="exportRecordDOC">带图Word</n-button>
+                          <n-button secondary type="primary" size="small" @click="exportRecordTalkDOC">对话Word</n-button>
+                          <n-button secondary type="primary" size="small" @click="exportRecordDocx">Docx</n-button>
+                      </n-flex>
+                  </div>
+
+                  <!-- Preview Content -->
+                  <div v-show="modeMain === 'preview'" class="flex-grow overflow-auto relative border-t border-dashed border-gray-300 pt-2">
+                      <n-message-provider>
+                        <preview-main :is-show="notMobile ? activeTab === 'preview' : isShowPreview" :preview-items="previewItems"></preview-main>
+                        <preview-bbs :is-show="notMobile ? activeTab === 'bbs' : isShowPreviewBBS" :preview-items="previewItems"></preview-bbs>
+                        <preview-bbs-pineapple :is-show="notMobile ? activeTab === 'bbspineapple' : isShowPreviewBBSPineapple"
+                          :preview-items="previewItems"></preview-bbs-pineapple>
+                        <preview-trg :is-show="notMobile ? activeTab === 'trg' : isShowPreviewTRG" :preview-items="previewItems"></preview-trg>
+                      </n-message-provider>
+                  </div>
+              </div>
+          </div>
+
+        </div>
+      </n-spin>
     </n-layout-content>
   </n-layout>
 </template>
@@ -132,8 +231,8 @@ import PreviewTableTR from './components/previews/preview-table-tr.vue'
 import { LogItem, CharItem, packNameId } from "./logManager/types";
 import { setCharInfo } from './logManager/importers/_logImpoter'
 import { msgCommandFormat, msgImageFormat, msgIMUseridFormat, msgOffTopicFormat, msgAtFormat } from "./utils";
-import { NButton, NText, useMessage, useModal, useNotification } from "naive-ui";
-import { User, LogoGithub, Delete as IconDelete } from '@vicons/carbon'
+import { NButton, NText, useMessage, useModal, useNotification, NDrawer, NDrawerContent, NFloatButton, NTabs, NTabPane, NGrid, NGridItem } from "naive-ui";
+import { User, LogoGithub, Delete as IconDelete, Settings, Menu } from '@vicons/carbon'
 import { breakpointsTailwind, useBreakpoints, useDark, useToggle } from '@vueuse/core'
 import OptionView from "./components/OptionView.vue";
 import randomColor from "randomcolor";
@@ -167,10 +266,54 @@ const isShowPreviewBBS = ref(false)
 const isShowPreviewBBSPineapple = ref(false)
 const isShowPreviewTRG = ref(false)
 
+const showSettings = ref(false)
+const activeTab = ref('preview')
+const modeMain = ref<'editor' | 'preview'>('editor')
+
+const handleTabChange = (val: string) => {
+  activeTab.value = val
+  if (val === 'preview') previewClick('preview')
+  else if (val === 'bbs') previewClick('bbs')
+  else if (val === 'bbspineapple') previewClick('bbspineapple')
+  else if (val === 'trg') previewClick('trg')
+}
+
+const closePreviewMobile = () => {
+  isShowPreview.value = false
+  isShowPreviewBBS.value = false
+  isShowPreviewBBSPineapple.value = false
+  isShowPreviewTRG.value = false
+}
+
+const rebuildAll = () => {
+  const text = store.editor.state.doc.toString()
+  logMan.lastText = ''
+  logMan.syncChange(text, [0, store.editor.state.doc.length], [0, text.length])
+  showPreview()
+}
+
+watch(modeMain, (v) => {
+  if (v === 'preview') {
+    rebuildAll()
+  }
+})
+
+import GourdSvg from './assets/gourd.svg'
+import FishSvg from './assets/fish.svg'
+import CatSvg from './assets/cat.svg'
+
 const colors = ref<string[]>([])
 const refreshColors = () => {
-  colors.value = randomColor({ count: 16 })
-  message.success("色板刷新成功！", { duration: 800 })
+  for (const pc of store.pcList) {
+    const c = randomColor()
+    pc.color = c
+    if (pc.name) {
+      store.pcNameColorMap.set(pc.name, c)
+    }
+  }
+  store.colorMapSave()
+  showPreview()
+  message.success("已为每个角色刷新随机颜色", { duration: 800 })
 }
 
 const colorChanged = debounce((v: string, i: CharItem) => {
@@ -969,7 +1112,8 @@ const code = ref("")
 
 .list-dynamic {
   width: 100%;
-  height: 500px;
+  height: 100%;
+  min-height: 300px;
   overflow-y: auto;
 }
 
@@ -981,6 +1125,143 @@ const code = ref("")
 }
 
 .scroller {
-  height: 95vh;
+  height: 100%;
+}
+
+/* Hand-drawn Theme */
+.hand-drawn-theme {
+  background-color: #fdfbf7;
+  background-image: radial-gradient(#d0c0a0 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.hand-drawn-box {
+  border: 2px solid #555;
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  box-shadow: 3px 4px 0 rgba(0,0,0,0.1);
+  background-color: rgba(255, 255, 255, 0.9);
+  overflow: hidden;
+}
+
+.hand-drawn-drawer .n-drawer-content {
+  border-top: 3px solid #555;
+  border-radius: 20px 20px 0 0;
+  overflow: auto;
+}
+
+.pc-item-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.pc-item-grid > .n-input:first-of-type {
+  flex: 1 1 8rem;
+  min-width: 0;
+}
+
+.pc-item-grid > .n-input:nth-of-type(2) {
+  flex: 1 1 8rem;
+  min-width: 0;
+}
+
+.pc-item-grid > .n-select {
+  flex: 0 0 6rem;
+  min-width: 6rem;
+}
+
+.pc-item-grid > .n-color-picker {
+  flex: 0 0 5rem;
+  width: 2.5rem;
+}
+
+.pc-card {
+  border: 2px solid #555;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 3px 255px 5px 25px / 255px 5px 225px 5px;
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+  transition: transform 0.2s;
+}
+
+.pc-card:hover {
+  transform: scale(1.01) rotate(-0.5deg);
+}
+
+/* Hand-drawn Input/Select Overrides */
+.hand-drawn-theme .n-input .n-input__border, 
+.hand-drawn-theme .n-input .n-input__state-border,
+.hand-drawn-theme .n-base-selection .n-base-selection__border,
+.hand-drawn-theme .n-base-selection .n-base-selection__state-border {
+  border: 2px solid #666 !important;
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px !important;
+  box-shadow: none !important;
+}
+
+.hand-drawn-theme .n-input:hover .n-input__state-border,
+.hand-drawn-theme .n-base-selection:hover .n-base-selection__state-border {
+  border-color: #333 !important;
+}
+
+.hand-drawn-theme .n-button {
+  border: 2px solid #555;
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  font-weight: bold;
+}
+.hand-drawn-theme .n-button:hover {
+  transform: rotate(1deg);
+}
+
+/* Decorations */
+.decor-gourd { top: 1rem; left: 1rem; width: 60px; transform: rotate(-15deg); filter: sepia(0.5) contrast(0.8) brightness(1.2); }
+.decor-fish { bottom: 1rem; left: 2rem; width: 80px; transform: rotate(5deg); filter: sepia(0.5) contrast(0.8) brightness(1.2); }
+.decor-cat { bottom: 1rem; right: 1rem; width: 70px; transform: rotate(10deg); filter: sepia(0.5) contrast(0.8) brightness(1.2); }
+
+@media (max-width: 768px) {
+  .decor-gourd, .decor-fish, .decor-cat {
+    opacity: 0.15;
+  }
+}
+
+.dark .decor-gourd, .dark .decor-fish, .dark .decor-cat {
+  opacity: 0.1;
+  filter: invert(1) opacity(0.5);
+}
+
+.dark .hand-drawn-theme {
+  background-color: #0f1220;
+  background-image: radial-gradient(#1e243b 1px, transparent 1px);
+}
+
+.dark .hand-drawn-box {
+  background-color: rgba(30, 35, 60, 0.85);
+  border-color: #d1d5db;
+}
+
+.dark .hand-drawn-drawer .n-drawer-content {
+  background-color: rgba(30, 35, 60, 0.95);
+  border-top-color: #d1d5db;
+}
+
+.font-hand {
+  font-family: 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif;
+}
+
+.codemirror, .cm-editor {
+  height: 100% !important;
+}
+
+.cm-scroller {
+  overflow: auto !important;
 }
 </style>
+.left-col {
+  height: calc(100vh - 80px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.scroll-card {
+  /* Deprecated */
+}
