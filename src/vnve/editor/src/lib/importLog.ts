@@ -1,5 +1,7 @@
 import { Scene, Dialogue, createDialogueScene, createTitleScene } from "@vnve/core";
 import { useEditorStore } from "@/store";
+import { importAssetToProjectTmp, DBAssetType } from "@/db";
+import { createSprite } from "@/lib/core";
 
 export interface LogItem {
   nickname: string;
@@ -37,12 +39,13 @@ export function importFromLocalStorage(): boolean {
     // Or we can just create one scene.
     
     const scene = createDialogueScene();
-    scene.label = "导入的Log";
+    scene.label = "完整log";
     scene.config.speak.effect = "typewriter";
     
     // Clear default empty dialogue if any
     scene.dialogues = [];
 
+    const speakerSet = new Set<string>();
     data.logs.forEach(log => {
         if (!log.message) return;
 
@@ -61,6 +64,7 @@ export function importFromLocalStorage(): boolean {
         }));
         
         const speakerName = roleMap.get(log.role) || log.nickname || "未知角色";
+        if (speakerName) speakerSet.add(speakerName);
 
         const dialogue: Dialogue = {
             speak: {
@@ -70,7 +74,7 @@ export function importFromLocalStorage(): boolean {
                 speaker: {
                     name: speakerName,
                     isDice: !!log.isDice,
-                    targetName: "", // No sprite by default
+                    targetName: "",
                     autoShowSpeaker: {
                         inEffect: "Show"
                     },
@@ -87,6 +91,53 @@ export function importFromLocalStorage(): boolean {
     
     editor.addScene(scene);
     editor.setActiveSceneByName(scene.name);
+
+    // 异步创建占位角色素材并插入到场景中，恢复角色选择
+    (async () => {
+      try {
+        const project = useEditorStore.getState().project;
+        if (!project || !project.id) return;
+
+        // 透明 1x1 PNG Base64
+        const transparentPngBase64 =
+          "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Ue8n3wAAAAASUVORK5CYII=";
+        const pngBytes = Uint8Array.from(atob(transparentPngBase64), (c) => c.charCodeAt(0));
+
+        const nameToSpriteName = new Map<string, string>();
+
+        for (const name of speakerSet) {
+          const file = new File([pngBytes], `${name}.png`, { type: "image/png" });
+          const asset = await importAssetToProjectTmp(project.id, DBAssetType.Character, file);
+          const sprite = await createSprite(asset, editor);
+          sprite.label = name;
+          editor.addChild(sprite);
+          nameToSpriteName.set(name, sprite.name);
+        }
+
+        // 绑定对白的 speakerTargetName 以便编辑器识别到角色
+        scene.dialogues = scene.dialogues.map((d) => {
+          const target = nameToSpriteName.get(d.speak.speaker?.name || "");
+          if (target) {
+            return {
+              ...d,
+              speak: {
+                ...d.speak,
+                speaker: {
+                  ...(d.speak.speaker || {}),
+                  speakerTargetName: target,
+                },
+              },
+            } as Dialogue;
+          }
+          return d;
+        });
+
+        // 触发一次场景刷新，确保编辑器状态与界面中的activeScene同步（包含角色列表）
+        editor.setActiveSceneByName(scene.name);
+      } catch (err) {
+        console.error("角色占位创建失败", err);
+      }
+    })();
     return true;
     
   } catch (e) {

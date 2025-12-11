@@ -24,6 +24,7 @@ interface TextFileEditorProps {
   onChange: (value: string) => void;
   onComplete: (content: string) => void;
   onChangeTemplate?: (template: string) => void;
+  textareaRef?: React.RefObject<HTMLTextAreaElement>;
 }
 
 export function TextFileEditor({
@@ -35,6 +36,7 @@ export function TextFileEditor({
   onChange,
   onChangeTemplate,
   onComplete,
+  textareaRef,
 }: TextFileEditorProps) {
   const disabled = useMemo(() => !!loading, [loading]);
   const { customTemplates } = useTemplates();
@@ -72,6 +74,7 @@ export function TextFileEditor({
   return (
     <div className="space-y-4 w-full">
       <Textarea
+        ref={textareaRef}
         value={value}
         onChange={handleTextareaChange}
         placeholder={placeholder}

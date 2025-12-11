@@ -14,6 +14,7 @@ import { checkEnv } from "@vnve/core";
 import { setDisableAudio } from "@/lib/core";
 import { Loading } from "@/components/editor/Loading";
 import { importFromLocalStorage } from "@/lib/importLog";
+import { projectDB } from "@/db";
 
 import { useEditorStore } from "@/store";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ export function EditorPage() {
   const { toast } = useToast();
   const editor = useEditorStore((state) => state.editor);
   const hasImported = useRef(false);
+  const setProject = useEditorStore((state) => state.setProject);
 
   const handleOpenSceneDetailDialog = () => {
     setIsOpenSceneDetailDialog(true);
@@ -33,11 +35,25 @@ export function EditorPage() {
 
   useEffect(() => {
     if (editor && !hasImported.current) {
-      if (importFromLocalStorage()) {
-        hasImported.current = true;
+      const dataStr = localStorage.getItem("vnve_import_data");
+      if (dataStr) {
+        (async () => {
+          const defaultProject = {
+            name: `导入作品`,
+            content: "",
+            time: Date.now(),
+          };
+          const id = await projectDB.add(defaultProject);
+          editor.clear();
+          setProject({ id, ...defaultProject });
+
+          if (importFromLocalStorage()) {
+            hasImported.current = true;
+          }
+        })();
       }
     }
-  }, [editor]);
+  }, [editor, setProject]);
 
   useEffect(() => {
     checkEnv().then((env) => {

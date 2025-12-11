@@ -258,7 +258,7 @@ export async function getAssetByName(
 }
 
 export async function exportDB() {
-  const blob = await db.export();
+  const blob = await (db as any).export();
   const dbObjectURL = URL.createObjectURL(blob);
   downloadFile("book", dbObjectURL, "vnve");
   URL.revokeObjectURL(dbObjectURL);
@@ -269,7 +269,7 @@ export async function importDB() {
   const file = files[0];
 
   if (file) {
-    await db.import(file);
+    await (db as any).import(file);
   }
 }
 

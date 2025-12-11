@@ -73,7 +73,7 @@ export class Compositor extends Connector {
         sampleRate: this.audioConfig.sampleRate,
       },
       fastStart: "in-memory",
-    });
+    } as any);
 
     // video encoder
     this.videoEncoder = new VideoEncoder({

@@ -407,7 +407,7 @@ const openVnve = () => {
   localStorage.setItem('vnve_import_data', JSON.stringify(data));
 
   // Generate Script Text for Text2Scene
-  let scriptText = "标题\n跑团记录\n\n";
+  let scriptText = "标题\场景1-1\n\n";
   scriptText += "场景\n默认背景\n\n";
 
   for (const item of previewItems.value) {

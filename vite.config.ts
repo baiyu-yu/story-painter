@@ -16,9 +16,18 @@ export default defineConfig({
       '~/': `${pathSrc}/`,
       '@/': `${pathSrc}/vnve/editor/src/`,
       '@vnve/core': `${pathSrc}/vnve/core/src`,
+      react: path.resolve(__dirname, 'node_modules/react'),
+      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
     },
   },
   base: './',
+  css: {
+    preprocessorOptions: {
+      scss: {
+        api: 'modern-compiler'
+      }
+    }
+  },
   build: {
     rollupOptions: {
       input: {

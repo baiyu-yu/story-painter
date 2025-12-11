@@ -47,7 +47,7 @@
     "@udecode/plate-node-id": "^38.0.0",
     "@udecode/plate-select": "^38.0.0",
     "@udecode/plate-selection": "^38.0.0",
-    "@vnve/core": "workspace:^",
+    "@vnve/core": "file:../core",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "dexie": "^3.2.4",

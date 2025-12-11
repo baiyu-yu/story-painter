@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   StoryScene,
   parseStory,
@@ -53,6 +53,7 @@ export function Text2SceneDialog({
   const [step, setStep] = useState(1);
   const { selectAsset } = useAssetLibrary();
   const [sceneTemplateName, setSceneTemplateName] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   // Scene Split State
   const [enableSplit, setEnableSplit] = useState(false);
@@ -170,6 +171,7 @@ export function Text2SceneDialog({
   };
 
   const handleDoNextStep = () => {
+    /*
     const hasUnselected = Object.keys(characterAssetMap).some(
       (name) => !characterAssetMap[name],
     );
@@ -181,11 +183,12 @@ export function Text2SceneDialog({
       });
       return;
     }
-
+    */
     setStep(step + 1);
   };
 
   const handleStory2Scenes = async () => {
+    /*
     const hasUnselected = Object.keys(perSceneBackgroundMap).some(
       (key) => !perSceneBackgroundMap[key],
     );
@@ -197,7 +200,7 @@ export function Text2SceneDialog({
       });
       return;
     }
-
+    */
     setLoadingText("场景生成中");
     try {
       await story2Scenes(
@@ -230,6 +233,12 @@ export function Text2SceneDialog({
     }
   };
 
+  const handleRemoveCharacter = (name: string) => {
+    const newMap = { ...characterAssetMap };
+    delete newMap[name];
+    setCharacterAssetMap(newMap);
+  };
+
   const handleSelectBackground = async (indexKey: string) => {
     if (loadingText) {
       return;
@@ -243,6 +252,32 @@ export function Text2SceneDialog({
         [indexKey]: asset,
       });
     }
+  };
+
+  const handleInsertSplit = () => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const prevScrollTop = textarea.scrollTop;
+    const prevScrollLeft = textarea.scrollLeft;
+    const text = importInputText;
+    const insertText = `\n${splitSeparator}\n`;
+
+    const newText =
+      text.substring(0, start) + insertText + text.substring(end);
+    setImportInputText(newText);
+
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(
+        start + insertText.length,
+        start + insertText.length,
+      );
+      textarea.scrollTop = prevScrollTop;
+      textarea.scrollLeft = prevScrollLeft;
+    }, 0);
   };
 
   // AI
@@ -316,10 +351,12 @@ export function Text2SceneDialog({
                   placeholder="例如: ---"
                   className="h-8"
                 />
+                <Button size="sm" variant="outline" onClick={handleInsertSplit}>插入</Button>
               </div>
             )}
           </div>
           <TextFileEditor
+            textareaRef={textareaRef}
             value={importInputText}
             placeholder="请输入或者选择剧本文件"
             loading={loadingText}
@@ -364,12 +401,21 @@ export function Text2SceneDialog({
               }
 
               return (
-                <AssetStateCard
-                  key={name}
-                  type={DBAssetType.Character}
-                  state={state}
-                  onSelect={() => handleSelectCharacter(name)}
-                ></AssetStateCard>
+                <div key={name} className="relative group">
+                  <AssetStateCard
+                    type={DBAssetType.Character}
+                    state={state}
+                    onSelect={() => handleSelectCharacter(name)}
+                  ></AssetStateCard>
+                  <Button
+                    size="icon"
+                    variant="destructive"
+                    className="absolute -top-2 -right-2 size-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => handleRemoveCharacter(name)}
+                  >
+                    <Icons.clear className="size-3" />
+                  </Button>
+                </div>
               );
             })}
           </div>

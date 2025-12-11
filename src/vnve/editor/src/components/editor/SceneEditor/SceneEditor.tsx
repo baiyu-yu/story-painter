@@ -448,7 +448,13 @@ export function SceneEditor() {
               );
             })}
             <MenubarSeparator />
-            <MenubarItem onClick={() => handleOpenImportText2Scene()}>
+            <MenubarItem onClick={() => {
+              if (!project) {
+                setIsOpenCreateProjectDialog(true);
+                return;
+              }
+              handleOpenImportText2Scene();
+            }}>
               导入剧本...
             </MenubarItem>
             <MenubarItem onClick={handleOpenAiText2Scene}>

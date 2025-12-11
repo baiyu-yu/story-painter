@@ -56,12 +56,6 @@ interface AnimatedGIFOptions {
 }
 
 /** Options for the AnimatedGIF constructor. */
-interface AnimatedGIFSize {
-  /** Width of the GIF image */
-  width: number;
-  /** Height of the GIF image */
-  height: number;
-}
 
 /**
  * Runtime object to play animated GIFs. This object is similar to an AnimatedSprite.
@@ -386,6 +380,7 @@ export class AnimatedGIF extends Sprite implements DisplayChild {
    * @param deltaTime - Time since last tick.
    */
   update(deltaTime: number): void {
+    void deltaTime;
     if (!this._playing) {
       return;
     }

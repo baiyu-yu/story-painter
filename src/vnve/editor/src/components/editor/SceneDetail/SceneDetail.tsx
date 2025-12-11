@@ -30,6 +30,7 @@ import { useSettingsStore } from "@/store/settings";
 import { genTTS } from "@/lib/core";
 import { SceneSettingsDialog } from "./SceneSettingsDialog";
 import { NONE_VOICE } from "@/lib/tts";
+import { SceneCharacterBindingDialog } from "./SceneCharacterBindingDialog";
 
 export function SceneDetail({ onClose }: { onClose?: () => void }) {
   const editor = useEditorStore((state) => state.editor);
@@ -38,6 +39,8 @@ export function SceneDetail({ onClose }: { onClose?: () => void }) {
   const [isOpenSaveAsTemplateDialog, setIsOpenSaveAsTemplateDialog] =
     useState(false);
   const [isOpenSceneSettingsDialog, setIsOpenSceneSettingsDialog] =
+    useState(false);
+  const [isOpenCharacterBindingDialog, setIsOpenCharacterBindingDialog] =
     useState(false);
   const scrollAreaRef = useRef(null);
   const ttsSettings = useSettingsStore((state) => state.tts);
@@ -254,6 +257,23 @@ export function SceneDetail({ onClose }: { onClose?: () => void }) {
                             <Button
                               size="sm"
                               variant="ghost"
+                              onClick={() => setIsOpenCharacterBindingDialog(true)}
+                            >
+                              <Icons.images className="size-4"></Icons.images>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>角色绑定</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="ghost"
                               onClick={() =>
                                 setIsOpenSaveAsTemplateDialog(true)
                               }
@@ -391,6 +411,12 @@ export function SceneDetail({ onClose }: { onClose?: () => void }) {
                 autoShowBackground={activeScene.config.autoShowBackground}
                 onConfirm={handleChangeSceneSettings}
                 onClose={() => setIsOpenSceneSettingsDialog(false)}
+              />
+            )}
+            {isOpenCharacterBindingDialog && (
+              <SceneCharacterBindingDialog
+                isOpen={isOpenCharacterBindingDialog}
+                onClose={() => setIsOpenCharacterBindingDialog(false)}
               />
             )}
           </>

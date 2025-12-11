@@ -86,7 +86,7 @@ const ToolbarButton = withTooltip(
               isDropdown && "my-1 justify-between pr-1",
               className,
             )}
-            ref={ref}
+            ref={ref as any}
             value={pressed ? "single" : ""}
             {...props}
           >
@@ -112,7 +112,7 @@ const ToolbarButton = withTooltip(
             isDropdown && "pr-1",
             className,
           )}
-          ref={ref}
+          ref={ref as any}
           {...props}
         >
           {children}
@@ -142,7 +142,7 @@ export const ToolbarGroup = withRef<
   if (!childArr || childArr.length === 0) return null;
 
   return (
-    <div className={cn("flex", className)} ref={ref}>
+    <div className={cn("flex", className)} ref={ref as any}>
       {!noSeparator && (
         <div className="h-full py-2">
           <Separator orientation="vertical" />
