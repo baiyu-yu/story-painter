@@ -268,7 +268,7 @@ export function SceneDetail({ onClose }: { onClose?: () => void }) {
                       </TooltipProvider>
                       {onClose && (
                         <Button
-                          className="-mr-3"
+                          className="fixed top-2 right-2 z-50 bg-background/80 backdrop-blur-sm"
                           size="sm"
                           variant="ghost"
                           onClick={onClose}

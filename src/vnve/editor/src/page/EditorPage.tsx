@@ -7,7 +7,7 @@ import {
 import { SceneDetail } from "@/components/editor/SceneDetail";
 import { AssetLibrary } from "@/components/editor/AssetLibrary";
 import { Toaster } from "@/components/ui/toaster";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useToast } from "@/components/hooks/use-toast";
 import { useMedia } from "@/components/hooks/useMedia";
 import { checkEnv } from "@vnve/core";
@@ -25,14 +25,17 @@ export function EditorPage() {
   const [isSupported, setIsSupported] = useState(null);
   const { toast } = useToast();
   const editor = useEditorStore((state) => state.editor);
+  const hasImported = useRef(false);
 
   const handleOpenSceneDetailDialog = () => {
     setIsOpenSceneDetailDialog(true);
   };
 
   useEffect(() => {
-    if (editor) {
-      importFromLocalStorage();
+    if (editor && !hasImported.current) {
+      if (importFromLocalStorage()) {
+        hasImported.current = true;
+      }
     }
   }, [editor]);
 

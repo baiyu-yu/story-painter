@@ -69,17 +69,34 @@
                          </n-flex>
                        </n-tab-pane>
                        <n-tab-pane name="tools" tab="工具箱">
-                          <div class="hand-drawn-box p-4 cursor-pointer hover:bg-gray-50 transition-colors" @click="openVnve">
-                             <n-flex align="center" justify="space-between">
-                                <n-flex align="center">
-                                  <n-icon size="24"><icon-video /></n-icon>
-                                  <span class="text-lg font-bold">视频生成器 (VNVE)</span>
-                                </n-flex>
-                                <n-icon size="20"><icon-arrow-right /></n-icon>
-                             </n-flex>
-                             <div class="text-gray-500 text-sm mt-1">
-                               将Log转化为视频，支持骰子演出效果
-                             </div>
+                          <div class="flex flex-col gap-2">
+                            <div class="hand-drawn-box p-4 cursor-pointer hover:bg-gray-50 transition-colors" @click="openVnve">
+                               <n-flex align="center" justify="space-between">
+                                  <n-flex align="center">
+                                    <n-icon size="24"><icon-video /></n-icon>
+                                    <span class="text-lg font-bold">视频生成器 (VNVE)</span>
+                                  </n-flex>
+                                  <n-icon size="20"><icon-arrow-right /></n-icon>
+                               </n-flex>
+                               <div class="text-gray-500 text-sm mt-1">
+                                 将Log转化为视频，支持骰子演出效果
+                               </div>
+                            </div>
+                            <div class="hand-drawn-box p-4 cursor-pointer hover:bg-gray-50 transition-colors" @click="openKpiReviewer">
+                               <n-flex align="center" justify="space-between">
+                                  <n-flex align="center">
+                                    <n-icon size="24"><icon-chart /></n-icon>
+                                    <span class="text-lg font-bold">跑团KPI审查器</span>
+                                  </n-flex>
+                                  <n-icon size="20"><icon-arrow-right /></n-icon>
+                               </n-flex>
+                               <div class="text-gray-500 text-sm mt-1">
+                                 查看角色发言统计图表和总字数
+                               </div>
+                            </div>
+                            <n-alert type="warning" class="mt-2" :show-icon="true">
+                              实验中内容，如果有bug请和骰主反馈
+                            </n-alert>
                           </div>
                        </n-tab-pane>
                      </n-tabs>
@@ -134,17 +151,34 @@
                      </n-flex>
                   </n-tab-pane>
                   <n-tab-pane name="tools" tab="工具箱">
-                      <div class="hand-drawn-box p-4 cursor-pointer hover:bg-gray-50 transition-colors" @click="openVnve">
-                         <n-flex align="center" justify="space-between">
-                            <n-flex align="center">
-                              <n-icon size="24"><icon-video /></n-icon>
-                              <span class="text-lg font-bold">视频生成器 (VNVE)</span>
-                            </n-flex>
-                            <n-icon size="20"><icon-arrow-right /></n-icon>
-                         </n-flex>
-                         <div class="text-gray-500 text-sm mt-1">
-                           将Log转化为视频，支持骰子演出效果
-                         </div>
+                      <div class="flex flex-col gap-2">
+                        <div class="hand-drawn-box p-4 cursor-pointer hover:bg-gray-50 transition-colors" @click="openVnve">
+                           <n-flex align="center" justify="space-between">
+                              <n-flex align="center">
+                                <n-icon size="24"><icon-video /></n-icon>
+                                <span class="text-lg font-bold">视频生成器 (VNVE)</span>
+                              </n-flex>
+                              <n-icon size="20"><icon-arrow-right /></n-icon>
+                           </n-flex>
+                           <div class="text-gray-500 text-sm mt-1">
+                             将Log转化为视频，支持骰子演出效果
+                           </div>
+                        </div>
+                        <div class="hand-drawn-box p-4 cursor-pointer hover:bg-gray-50 transition-colors" @click="openKpiReviewer">
+                           <n-flex align="center" justify="space-between">
+                              <n-flex align="center">
+                                <n-icon size="24"><icon-chart /></n-icon>
+                                <span class="text-lg font-bold">跑团KPI审查器</span>
+                              </n-flex>
+                              <n-icon size="20"><icon-arrow-right /></n-icon>
+                           </n-flex>
+                           <div class="text-gray-500 text-sm mt-1">
+                             查看角色发言统计图表和总字数
+                           </div>
+                        </div>
+                        <n-alert type="warning" class="mt-2" :show-icon="true">
+                          实验中内容，如果有bug请和骰主反馈
+                        </n-alert>
                       </div>
                   </n-tab-pane>
                </n-tabs>
@@ -257,13 +291,14 @@ import previewRole from "./components/previews/preview-role.vue";
 import previewBbs from "./components/previews/preview-bbs.vue";
 import previewBbsPineapple from "./components/previews/preview-bbs-pineapple.vue";
 import previewTrg from "./components/previews/preview-trg.vue";
+import KpiReviewer from "./components/KpiReviewer.vue";
 import PreviewItem from './components/previews/preview-main-item.vue'
 import PreviewTableTR from './components/previews/preview-table-tr.vue'
 import { LogItem, CharItem, packNameId } from "./logManager/types";
 import { setCharInfo } from './logManager/importers/_logImpoter'
 import { msgCommandFormat, msgImageFormat, msgIMUseridFormat, msgOffTopicFormat, msgAtFormat } from "./utils";
-import { NButton, NText, useMessage, useModal, useNotification, NDrawer, NDrawerContent, NFloatButton, NTabs, NTabPane, NGrid, NGridItem } from "naive-ui";
-import { User, LogoGithub, Delete as IconDelete, Settings, Menu, Video as IconVideo, ArrowRight as IconArrowRight } from '@vicons/carbon'
+import { NButton, NText, useMessage, useModal, useNotification, NDrawer, NDrawerContent, NFloatButton, NTabs, NTabPane, NGrid, NGridItem, NAlert } from "naive-ui";
+import { User, LogoGithub, Delete as IconDelete, Settings, Menu, Video as IconVideo, ArrowRight as IconArrowRight, ChartLine as IconChart } from '@vicons/carbon'
 import { breakpointsTailwind, useBreakpoints, useDark, useToggle } from '@vueuse/core'
 import OptionView from "./components/OptionView.vue";
 import randomColor from "randomcolor";
@@ -299,6 +334,7 @@ const isShowPreviewTRG = ref(false)
 const isShowPreviewRole = ref(false)
 
 const showSettings = ref(false)
+const showKpiReviewer = ref(false)
 const activeTab = ref('preview')
 const modeMain = ref<'editor' | 'preview'>('editor')
 
@@ -362,7 +398,8 @@ const backV1 = () => {
 }
 
 const openVnve = () => {
-  showPreview();
+  rebuildAll();
+  // showPreview(); // rebuildAll calls showPreview
   const data = {
     logs: previewItems.value,
     characters: store.pcList
@@ -389,6 +426,16 @@ const openVnve = () => {
 
   localStorage.setItem('vnve_script_text', scriptText);
   window.open('/vnve.html', '_blank');
+}
+
+const openKpiReviewer = () => {
+  rebuildAll();
+  const data = {
+    logs: logMan.curItems,
+    characters: store.pcList
+  };
+  localStorage.setItem('kpi_data', JSON.stringify(data));
+  window.open('/kpi.html', '_blank');
 }
 
 // 清空文本

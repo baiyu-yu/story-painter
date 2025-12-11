@@ -24,6 +24,7 @@ export default defineConfig({
       input: {
         main: path.resolve(__dirname, 'index.html'),
         vnve: path.resolve(__dirname, 'vnve.html'),
+        kpi: path.resolve(__dirname, 'kpi.html'),
       },
     },
   },

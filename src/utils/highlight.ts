@@ -9,7 +9,7 @@ import {
 import { completeFromList } from "@codemirror/autocomplete"
 import { CharItem } from "~/logManager/types"
 import { Extension } from "@codemirror/state";
-import * as twColors from 'tailwindcss/colors'
+import { blue, pink, zinc, gray } from 'tailwindcss/colors'
 export const reNameLine = /^([^(<\n]+(\((?!\d+\))[^(\n]+\))?)(\(\d+\))?(\s+)(\d{4}\/\d{1,2}\/\d{1,2} )?(\d{1,2}:\d{1,2}:\d{2})( #\d+)?/
 // export const reNameLine = /^([^(<\n]+)(\([^(\n]+\)|\<[^(\n]+\>)?(\s+)(\d{4}\/\d{1,2}\/\d{1,2} )?(\d{1,2}:\d{1,2}:\d{2})( #\d+)?/
 export const reNameLine2 = /([^(<\n]+)(\([^(\n]+\)|\<[^(\n]+\>)?(\s+)(\d{4}\/\d{1,2}\/\d{1,2} )?(\d{1,2}:\d{1,2}:\d{2})( #\d+)?/g
@@ -32,12 +32,12 @@ export function generateLang(pcList: CharItem[], options: any = undefined): Exte
   }
 
   const highLights: TagStyle[] = [
-    { tag: tagNameLine, color: twColors.blue['500'], fontWeight: '500' }, // 表示角色
-    { tag: tagNameLineHost, color: twColors.pink['500'], fontWeight: '500' }, // 表示主持人
-    { tag: tagNameLineDice, color: twColors.zinc['500'], fontWeight: '500' }, // 表示骰子
+    { tag: tagNameLine, color: blue['500'], fontWeight: '500' }, // 表示角色
+    { tag: tagNameLineHost, color: pink['500'], fontWeight: '500' }, // 表示主持人
+    { tag: tagNameLineDice, color: zinc['500'], fontWeight: '500' }, // 表示骰子
     {
       tag: tagNameLineHide,
-      color: twColors.gray['500'],
+      color: gray['500'],
       fontWeight: '500',
       fontStyle: 'italic',
       'text-decoration': 'line-through'

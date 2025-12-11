@@ -21,7 +21,8 @@
     "noFallthroughCasesInSwitch": true,
     "types": [
       "@types/wicg-file-system-access",
-      "dom-webcodecs"
+      "dom-webcodecs",
+      "vitest"
     ],
     "baseUrl": ".",
     "paths": {

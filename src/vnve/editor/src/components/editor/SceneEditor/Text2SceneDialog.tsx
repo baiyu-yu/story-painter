@@ -26,6 +26,9 @@ import { DBAssetType } from "@/db";
 import { Loader2 } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { matchJSON } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 export function Text2SceneDialog({
   isOpen,
@@ -44,11 +47,16 @@ export function Text2SceneDialog({
   const { toast } = useToast();
   const [characterAssetMap, setCharacterAssetMap] = useState(null);
   const [backgroundAssetMap, setBackgroundAssetMap] = useState(null);
+  const [perSceneBackgroundMap, setPerSceneBackgroundMap] = useState<Record<string, any>>({});
   const [aiInputText, setAiInputText] = useState("");
   const [importInputText, setImportInputText] = useState("");
   const [step, setStep] = useState(1);
   const { selectAsset } = useAssetLibrary();
   const [sceneTemplateName, setSceneTemplateName] = useState("");
+  
+  // Scene Split State
+  const [enableSplit, setEnableSplit] = useState(false);
+  const [splitSeparator, setSplitSeparator] = useState("---");
 
   useEffect(() => {
     if (initialText && type === "formatter") {
@@ -74,14 +82,36 @@ export function Text2SceneDialog({
     setBackgroundAssetMap(null);
     setAiInputText("");
     setImportInputText("");
+    setEnableSplit(false);
   };
 
   const handleImportScreenplay = async (text: string) => {
     setLoadingText("剧本导入中");
     try {
       const json = matchJSON(text); // 同步支持导入JSON格式
+      let finalStory: StoryScene[] = [];
 
-      await handleStory(json?.scenes ? json.scenes : text2Story(text));
+      if (json?.scenes) {
+        finalStory = json.scenes;
+      } else if (enableSplit && splitSeparator) {
+        const parts = text.replace(new RegExp(splitSeparator, 'g'), `${splitSeparator}\n\n`).split(new RegExp(splitSeparator, 'g'));
+        for (let i = 0; i < parts.length; i++) {
+          const part = parts[i];
+          if (!part.trim()) continue;
+          const partStory = text2Story(part);
+          // Ensure scenes have names if they are default
+          partStory.forEach((s, idx) => {
+            if (!s.name || s.name === "未命名") {
+              s.name = `场景${i + 1}-${idx + 1}`;
+            }
+          });
+          finalStory.push(...partStory);
+        }
+      } else {
+        finalStory = text2Story(text);
+      }
+
+      await handleStory(finalStory);
     } catch (error) {
       toast({
         title: "导入失败！",
@@ -130,6 +160,12 @@ export function Text2SceneDialog({
     setCharacterAssetMap(result.characterAssetMap);
     setBackgroundAssetMap(result.backgroundAssetMap);
 
+    const initPerScene: Record<string, any> = {};
+    story.forEach((_, idx) => {
+      initPerScene[String(idx)] = null;
+    });
+    setPerSceneBackgroundMap(initPerScene);
+
     setStep(step + 1);
   };
 
@@ -150,8 +186,8 @@ export function Text2SceneDialog({
   };
 
   const handleStory2Scenes = async () => {
-    const hasUnselected = Object.keys(backgroundAssetMap).some(
-      (name) => !backgroundAssetMap[name],
+    const hasUnselected = Object.keys(perSceneBackgroundMap).some(
+      (key) => !perSceneBackgroundMap[key],
     );
 
     if (hasUnselected) {
@@ -168,7 +204,7 @@ export function Text2SceneDialog({
         story,
         editor,
         characterAssetMap,
-        backgroundAssetMap,
+        perSceneBackgroundMap,
         sceneTemplateName,
       );
       handleClose();
@@ -194,7 +230,7 @@ export function Text2SceneDialog({
     }
   };
 
-  const handleSelectBackground = async (name: string) => {
+  const handleSelectBackground = async (indexKey: string) => {
     if (loadingText) {
       return;
     }
@@ -202,9 +238,9 @@ export function Text2SceneDialog({
     const asset = await selectAsset(DBAssetType.Background);
 
     if (asset) {
-      setBackgroundAssetMap({
-        ...backgroundAssetMap,
-        [name]: asset,
+      setPerSceneBackgroundMap({
+        ...perSceneBackgroundMap,
+        [indexKey]: asset,
       });
     }
   };
@@ -261,6 +297,28 @@ export function Text2SceneDialog({
             导入剧本
           </DialogTitle>
           <DialogDescription></DialogDescription>
+          <div className="flex items-center gap-4 py-2">
+            <div className="flex items-center gap-2">
+              <Switch 
+                id="split-mode" 
+                checked={enableSplit} 
+                onCheckedChange={setEnableSplit}
+              />
+              <Label htmlFor="split-mode">场景分割</Label>
+            </div>
+            {enableSplit && (
+              <div className="flex items-center gap-2 flex-1">
+                <Label htmlFor="split-sep" className="whitespace-nowrap">分割符</Label>
+                <Input 
+                  id="split-sep" 
+                  value={splitSeparator} 
+                  onChange={(e) => setSplitSeparator(e.target.value)}
+                  placeholder="例如: ---"
+                  className="h-8"
+                />
+              </div>
+            )}
+          </div>
           <TextFileEditor
             value={importInputText}
             placeholder="请输入或者选择剧本文件"
@@ -342,23 +400,25 @@ export function Text2SceneDialog({
         </DialogHeader>
         <ScrollArea>
           <div className="flex gap-1 pb-4">
-            {Object.keys(backgroundAssetMap).map((name) => {
-              const asset = backgroundAssetMap[name];
-              let state = { name, id: 0, ext: "" };
+            {story.map((s, idx) => {
+              const key = String(idx);
+              const asset = perSceneBackgroundMap[key];
+              const displayName = s.name?.trim() ? s.name : `场景${idx + 1}`;
+              let state = { name: displayName, id: 0, ext: "" };
 
               if (asset) {
                 const hit =
-                  asset.states.find((state) => state.id === asset.stateId) ||
+                  asset.states.find((st) => st.id === asset.stateId) ||
                   asset.states[0];
-                state = { ...hit, name };
+                state = { ...hit, name: displayName };
               }
 
               return (
                 <AssetStateCard
-                  key={name}
+                  key={key}
                   type={DBAssetType.Background}
                   state={state}
-                  onSelect={() => handleSelectBackground(name)}
+                  onSelect={() => handleSelectBackground(key)}
                 ></AssetStateCard>
               );
             })}

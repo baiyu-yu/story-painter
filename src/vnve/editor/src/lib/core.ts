@@ -248,9 +248,28 @@ export function text2Story(text): StoryScene[] {
       story[story.length - 1].type = type;
       story[story.length - 1].background = parseName(item.value);
     } else {
+      if (!story[story.length - 1]) {
+        story.push({
+          name: "",
+          background: {
+            name: "",
+            state: "",
+          },
+          dialogues: [],
+        });
+      }
+      let charNameRaw = item.name;
+      let lineValue = item.value;
+      if (!lineValue || !lineValue.trim()) {
+        const m = charNameRaw.match(/^(.+?)(?:[:：]\s*|\s{1,})(.+)$/);
+        if (m) {
+          charNameRaw = m[1];
+          lineValue = m[2];
+        }
+      }
       story[story.length - 1].dialogues.push({
-        character: parseName(item.name),
-        line: item.value,
+        character: parseName(charNameRaw),
+        line: lineValue,
       });
     }
   });
@@ -269,7 +288,9 @@ export async function parseStory(story: StoryScene[]) {
       }
     });
 
-    backgrounds.add(scene.background.name);
+    if (scene.background?.name && scene.background.name.trim() !== "") {
+      backgrounds.add(scene.background.name);
+    }
   });
 
   const characterAssetMap: Record<string, DBAsset> = {};
@@ -312,7 +333,42 @@ export async function story2Scenes(
   backgroundAssetMap: Record<string, DBAsset>,
   sceneTemplateName?: string,
 ) {
-  for (const item of story) {
+  for (let i = 0; i < story.length; i++) {
+    const item = story[i];
+    if (editor?.activeScene) {
+      const interScene = createDialogueScene();
+      interScene.label = "中间幕";
+      editor.addScene(interScene);
+      editor.setActiveScene(interScene);
+
+      editor.addDialogue({
+        speak: {
+          speaker: {
+            targetName: "",
+            speakerTargetName: "Narrator",
+            name: "",
+          },
+        },
+        lines: [
+          {
+            type: "p",
+            children: [
+              {
+                type: "directive",
+                value: {
+                  directive: "FadeTransition",
+                  params: { duration: 1 },
+                  label: "转场:Fade",
+                },
+                children: [{ text: "" }],
+              },
+              { text: "" },
+            ],
+          },
+        ],
+      });
+    }
+
     let scene: Scene;
     const type = item.type ?? sceneTemplateName;
 
@@ -355,7 +411,8 @@ export async function story2Scenes(
 
     if (item.background) {
       const { name, state } = item.background;
-      const asset = backgroundAssetMap[name];
+      const indexKey = String(i);
+      const asset = backgroundAssetMap[indexKey] || backgroundAssetMap[name];
 
       if (asset) {
         const hitState = getAssetState(asset, state);

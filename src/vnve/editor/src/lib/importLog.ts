@@ -13,9 +13,9 @@ export interface CharItem {
   role: string;
 }
 
-export function importFromLocalStorage() {
+export function importFromLocalStorage(): boolean {
   const dataStr = localStorage.getItem('vnve_import_data');
-  if (!dataStr) return;
+  if (!dataStr) return false;
   
   try {
     const data = JSON.parse(dataStr) as { logs: LogItem[], characters: CharItem[] };
@@ -23,7 +23,13 @@ export function importFromLocalStorage() {
     
     const editorStore = useEditorStore.getState();
     const editor = editorStore.editor;
-    if (!editor) return;
+    if (!editor) return false;
+
+    // Create map of role -> name
+    const roleMap = new Map<string, string>();
+    if (data.characters) {
+      data.characters.forEach(c => roleMap.set(c.role, c.name));
+    }
 
     // Create a new scene for the imported log
     // We can try to be smart and split scenes if there is a long pause or specific marker?
@@ -54,13 +60,15 @@ export function importFromLocalStorage() {
             children: [{ text: line }]
         }));
         
+        const speakerName = roleMap.get(log.role) || log.nickname || "未知角色";
+
         const dialogue: Dialogue = {
             speak: {
                 wordsPerMin: 300,
                 interval: 0.2,
                 effect: "typewriter",
                 speaker: {
-                    name: log.nickname || "未知角色",
+                    name: speakerName,
                     isDice: !!log.isDice,
                     targetName: "", // No sprite by default
                     autoShowSpeaker: {
@@ -79,8 +87,10 @@ export function importFromLocalStorage() {
     
     editor.addScene(scene);
     editor.setActiveSceneByName(scene.name);
+    return true;
     
   } catch (e) {
     console.error("Import failed", e);
+    return false;
   }
 }
