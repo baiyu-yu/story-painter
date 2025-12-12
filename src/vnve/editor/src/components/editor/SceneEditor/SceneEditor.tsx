@@ -370,7 +370,9 @@ export function SceneEditor() {
     window.addEventListener("resize", adjustCanvasWidth);
 
     adjustCanvasWidth();
-    initEditor(canvasRef.current);
+    if (canvasRef.current) {
+      initEditor(canvasRef.current);
+    }
     director.current = new Director({
       onProgress(progress, currentTime) {
         updateActionProgress(progress, currentTime);

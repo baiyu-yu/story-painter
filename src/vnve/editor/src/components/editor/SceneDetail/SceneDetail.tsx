@@ -163,7 +163,21 @@ export function SceneDetail({ onClose }: { onClose?: () => void }) {
   };
 
   const handleBatchGenerateTTS = async () => {
-    if (!ttsSettings || !ttsSettings.appid || !ttsSettings.token) {
+    if (!ttsSettings) {
+      toast({
+        title: "请先完成语音合成设置",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const hasAppIdAndToken = ttsSettings.appid && ttsSettings.token;
+    const hasCustomConfig =
+      ttsSettings.customUrl &&
+      ttsSettings.customHeaders &&
+      ttsSettings.customBody;
+
+    if (!hasAppIdAndToken && !hasCustomConfig) {
       toast({
         title: "请先完成语音合成设置",
         variant: "destructive",

@@ -1,3 +1,5 @@
+import { getAudioMimeByExt } from "@/lib/utils";
+
 interface SynthesisParams {
   token: string;
   appid: string;
@@ -7,6 +9,9 @@ interface SynthesisParams {
   volume?: number;
   speed?: number;
   pitch?: number;
+  customUrl?: string;
+  customHeaders?: string;
+  customBody?: string;
 }
 
 interface SynthesisTaskResponse {
@@ -18,11 +23,24 @@ interface SynthesisTaskResponse {
 interface SynthesisResult {
   audio_url: string;
   task_status: number;
+  audio_ext?: string;
 }
 
 export async function longTextSynthesis(
   params: SynthesisParams,
 ): Promise<SynthesisResult> {
+  const {
+    customUrl,
+    customHeaders,
+    customBody
+  } = params;
+
+  // 只要配置了 customUrl 就走自定义逻辑，无论其他参数如何
+  // 这里必须直接返回，否则会继续向下执行走到 createSynthesisTask，那里硬编码了 /api/tts/ark
+  if (customUrl) {
+    return customSynthesis(params);
+  }
+
   const {
     text,
     voiceType,
@@ -83,6 +101,168 @@ export async function longTextSynthesis(
     }
   }
   return result;
+}
+
+async function customSynthesis(params: SynthesisParams): Promise<SynthesisResult> {
+  const { customUrl, customHeaders, customBody, text, voiceType, volume, speed, pitch, token } = params;
+  
+  let headers: Record<string, string> = {};
+  if (customHeaders) {
+    try {
+      // Simple token replacement
+      const headersStr = customHeaders.replace(/\{token\}/g, token);
+      headers = JSON.parse(headersStr);
+    } catch (e) {
+      console.error("Failed to parse custom headers", e);
+    }
+  }
+
+  let body: any = {};
+  if (customBody) {
+    try {
+      // Escape text for JSON string replacement
+      // A safer way is to parse first, but user provides string with placeholders.
+      // We'll use simple replacement for now, assuming user knows what they are doing or we can handle it better.
+      // Actually, regex replace on JSON string is risky if text contains quotes.
+      // Better approach: Parse customBody as JSON first (if it doesn't contain placeholders as keys/values that break JSON),
+      // then traverse and replace?
+      // Or just replace and hope for best?
+      // The prompt says "custom request body", usually templates.
+      // Let's try to handle escaping.
+      const safeText = text.replace(/["\\]/g, '\\$&').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+      
+      const bodyStr = customBody
+        .replace(/\{text\}/g, safeText)
+        .replace(/\{voice\}/g, voiceType)
+        .replace(/\{volume\}/g, String(volume ?? 1))
+        .replace(/\{speed\}/g, String(speed ?? 1))
+        .replace(/\{pitch\}/g, String(pitch ?? 1));
+      
+      body = JSON.parse(bodyStr);
+    } catch (e) {
+      console.error("Failed to parse custom body", e);
+      // Fallback: try to just use it if it's not a JSON string but maybe form data?
+      // But we set Content-Type to application/json usually.
+    }
+  }
+
+  const isExternal = /^https?:\/\//i.test(customUrl!);
+  const backendBase = 'https://logbackend.fishwhite.top';
+  const requestUrl = isExternal
+    ? `${backendBase}/api/proxy?target=${encodeURIComponent(customUrl!)}`
+    : customUrl!;
+
+  const response = await fetch(requestUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...headers,
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+     throw new Error(`Custom TTS request failed: ${response.status} ${response.statusText}`);
+  }
+
+  const contentType = response.headers.get("content-type");
+  if (contentType && contentType.includes("application/json")) {
+    const data = await response.json();
+    const getFromJson = (d: any) => {
+      let format = d?.format || d?.audio_format || d?.mime?.replace(/^audio\//, "");
+      const audioObj = d?.output?.audio || d?.audio;
+      if (audioObj && typeof audioObj === 'object') {
+        const rawUrl = audioObj.url || audioObj.link || audioObj.href;
+        if (rawUrl && typeof rawUrl === 'string') {
+          const clean = sanitizeUrl(rawUrl);
+          const proxied = /^https?:\/\//i.test(clean) ? `${backendBase}/api/proxy?target=${encodeURIComponent(clean)}` : clean;
+          const ext = extFromUrl(clean) || format;
+          return { url: proxied, ext };
+        }
+        const d64 = audioObj.data || audioObj.base64;
+        if (d64 && typeof d64 === 'string') {
+          const norm = normalizeBase64(d64);
+          const bytes = atob(norm);
+          const arr = new Uint8Array(bytes.length);
+          for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+          const mime = getAudioMimeByExt(format || "mp3");
+          const blob = new Blob([arr], { type: mime });
+          return { url: URL.createObjectURL(blob), ext: (format || "mp3") };
+        }
+      }
+      if (d?.output?.results && Array.isArray(d.output.results)) {
+        const item = d.output.results.find((r: any) => r?.type === "audio" || r?.content?.audio);
+        if (item) {
+          format = item?.content?.format || item?.content?.mime?.replace(/^audio\//, "") || format;
+          const b64 = item?.content?.audio;
+          if (b64) {
+            const norm = normalizeBase64(b64);
+            const bytes = atob(norm);
+            const arr = new Uint8Array(bytes.length);
+            for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+            const mime = getAudioMimeByExt(format || "mp3");
+            const blob = new Blob([arr], { type: mime });
+            return { url: URL.createObjectURL(blob), ext: (format || "mp3") };
+          }
+        }
+      }
+      const b64 = d?.audio_base64 || d?.audio;
+      if (b64) {
+        const norm = normalizeBase64(b64);
+        const bytes = atob(norm);
+        const arr = new Uint8Array(bytes.length);
+        for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+        const mime = getAudioMimeByExt(format || "mp3");
+        const blob = new Blob([arr], { type: mime });
+        return { url: URL.createObjectURL(blob), ext: (format || "mp3") };
+      }
+      const url = d?.audio_url || d?.url;
+      if (url) {
+        const clean = sanitizeUrl(url);
+        const proxied = /^https?:\/\//i.test(clean) ? `${backendBase}/api/proxy?target=${encodeURIComponent(clean)}` : clean;
+        const ext = extFromUrl(clean) || format;
+        return { url: proxied, ext };
+      }
+      return null;
+    };
+    const r = getFromJson(data);
+    if (r) return { audio_url: r.url, task_status: 1, audio_ext: r.ext } as any;
+    return data as any;
+  } else {
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const ext = blob.type?.startsWith("audio/") ? blob.type.replace("audio/", "") : undefined;
+    return { audio_url: url, task_status: 1, audio_ext: ext } as any;
+  }
+}
+
+function normalizeBase64(s: string) {
+  let t = s.replace(/-/g, "+").replace(/_/g, "/");
+  const pad = t.length % 4;
+  if (pad) t += "=".repeat(4 - pad);
+  return t;
+}
+
+function sanitizeUrl(u: string) {
+  let s = (u || "").trim();
+  s = s.replace(/^`+|`+$/g, "");
+  s = s.replace(/^"+|"+$/g, "");
+  s = s.replace(/^'+|'+$/g, "");
+  return s.trim();
+}
+
+function extFromUrl(u: string) {
+  try {
+    const p = new URL(u);
+    const path = p.pathname;
+    const i = path.lastIndexOf('.');
+    if (i > -1) {
+      let ext = path.slice(i + 1).toLowerCase();
+      if (ext === 'm4a') ext = 'mp4';
+      return ext;
+    }
+  } catch {}
+  return undefined;
 }
 
 function genUUID(): string {
@@ -162,6 +342,20 @@ async function querySynthesisResult(params: {
 }
 
 export const NONE_VOICE = "NONE_VOICE";
+
+export function getVoiceOptions(customModelsJson?: string) {
+  if (customModelsJson) {
+    try {
+      const custom = JSON.parse(customModelsJson);
+      if (Array.isArray(custom)) {
+         return [{ name: "无", value: NONE_VOICE }, ...custom];
+      }
+    } catch (e) {
+      console.error("Failed to parse custom models", e);
+    }
+  }
+  return VOICE_OPTIONS;
+}
 
 // https://www.volcengine.com/docs/6561/97465#%E4%B8%AD%E6%96%87
 export const VOICE_OPTIONS = [

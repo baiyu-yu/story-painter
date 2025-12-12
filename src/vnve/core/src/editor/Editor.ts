@@ -1,4 +1,4 @@
-import * as PIXI from "pixi.js";
+import { Application, ICanvas, Container } from "pixi.js";
 import { Transformer } from "@pixi-essentials/transformer";
 import { Scene, Child, Dialogue, Sound, Sprite, isChild } from "../scene";
 import { log } from "../util";
@@ -22,7 +22,7 @@ export type EditorChildPosition =
   | "right";
 
 interface EditorOption {
-  view: PIXI.ICanvas;
+  view: ICanvas;
   width: number;
   height: number;
   background: number;
@@ -41,7 +41,7 @@ export class Editor {
     onChangeScenes: () => {},
   };
   public options: Required<EditorOption>;
-  public app: PIXI.Application;
+  public app: Application;
   public scenes: Scene[];
   public activeScene?: Scene;
   public activeChild?: Child;
@@ -50,10 +50,15 @@ export class Editor {
     __doubleTapTimer?: ReturnType<typeof setTimeout>;
   };
 
-  constructor(options: Partial<EditorOption> & { view: PIXI.ICanvas }) {
+  constructor(options: Partial<EditorOption> & { view: ICanvas }) {
     this.options = Object.assign({}, Editor.defaultEditorOptions, options);
     const { view, width, height, background } = this.options;
-    this.app = new PIXI.Application({
+    
+    if (!view) {
+        throw new Error("Editor requires a valid canvas view");
+    }
+
+    this.app = new Application({
       view,
       width,
       height,
@@ -91,14 +96,14 @@ export class Editor {
       }
     });
     this.activeScene?.addChild(
-      this.activeTransformer as unknown as PIXI.Container,
+      this.activeTransformer as unknown as Container,
     );
   }
 
   public removeTransformer() {
     if (this.activeTransformer) {
       this.activeScene?.removeChild(
-        this.activeTransformer as unknown as PIXI.Container,
+        this.activeTransformer as unknown as Container,
       );
       this.activeTransformer.destroy();
       this.activeTransformer = undefined;
@@ -440,7 +445,7 @@ export class Editor {
     }
   }
 
-  public swapChildren(child1: PIXI.Container, child2: PIXI.Container) {
+  public swapChildren(child1: Container, child2: Container) {
     this.activeScene?.swapChildren(child1, child2);
   }
 

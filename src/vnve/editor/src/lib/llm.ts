@@ -20,9 +20,17 @@ async function requestLLM(system: string, prompt: string) {
     throw new Error("请先在设置中启用 AI 配置！");
   }
 
+  const backendBase = 'https://logbackend.fishwhite.top';
+  const platformBaseMap: Record<string, string> = {
+    openai: 'https://api.openai.com/v1',
+    deepseek: 'https://api.deepseek.com',
+    ark: 'https://ark.cn-beijing.volces.com/api/v3',
+  };
+  const targetBase = platformBaseMap[platform] || platformBaseMap['deepseek'];
+
   const client = new OpenAI({
     apiKey,
-    baseURL: `${location.origin}/api/llm/${platform}`,
+    baseURL: `${backendBase}/api/proxy?target=${encodeURIComponent(targetBase)}`,
     dangerouslyAllowBrowser: true,
   });
 

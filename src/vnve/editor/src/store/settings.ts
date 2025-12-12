@@ -10,6 +10,10 @@ interface AISettings {
 interface TTSSettings {
   appid: string;
   token: string;
+  customUrl?: string;
+  customHeaders?: string;
+  customBody?: string;
+  customModels?: string;
 }
 
 interface SettingsState {

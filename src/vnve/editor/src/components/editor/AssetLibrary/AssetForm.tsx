@@ -40,7 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { longTextSynthesis, NONE_VOICE, VOICE_OPTIONS } from "@/lib/tts";
+import { longTextSynthesis, NONE_VOICE, VOICE_OPTIONS, getVoiceOptions } from "@/lib/tts";
 import { useSettingsStore } from "@/store/settings";
 import { useToast } from "@/components/hooks/use-toast";
 import { Loader } from "@/components/ui/loader";
@@ -101,6 +101,10 @@ export function AssetForm({
     keyName: "_id",
   });
   const ttsSettings = useSettingsStore((state) => state.tts);
+  const voiceOptions = useMemo(
+    () => getVoiceOptions(ttsSettings?.customUrl ? ttsSettings.customModels : undefined),
+    [ttsSettings?.customUrl, ttsSettings?.customModels],
+  );
   const { toast } = useToast();
 
   const handleSubmit = (values: z.infer<typeof formSchema>) => {
@@ -115,7 +119,7 @@ export function AssetForm({
   };
 
   const handlePreviewVoice = async (voiceType: string) => {
-    if (!ttsSettings || !ttsSettings.appid || !ttsSettings.token) {
+    if (!ttsSettings || (!ttsSettings.customUrl && (!ttsSettings.appid || !ttsSettings.token))) {
       toast({
         title: "请先完成语音合成设置",
         variant: "destructive",
@@ -138,6 +142,9 @@ export function AssetForm({
         voiceType,
         token: ttsSettings.token,
         appid: ttsSettings.appid,
+        customUrl: ttsSettings.customUrl,
+        customHeaders: ttsSettings.customHeaders,
+        customBody: ttsSettings.customBody,
       });
 
       const audio = new Audio(result.audio_url);
@@ -237,7 +244,7 @@ export function AssetForm({
                           <SelectValue placeholder="请选择音色" />
                         </SelectTrigger>
                         <SelectContent>
-                          {VOICE_OPTIONS.map((option) => (
+                          {voiceOptions.map((option) => (
                             <SelectItem key={option.value} value={option.value}>
                               {option.name}
                             </SelectItem>

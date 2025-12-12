@@ -11,10 +11,11 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useEditorStore } from "@/store";
 import { AssetStateCard } from "@/components/editor/AssetLibrary/AssetCard";
-import { DBAssetType } from "@/db";
+import { DBAssetType, getAssetById, DBAsset, getAssetSourceURL } from "@/db";
 import { useAssetLibrary } from "@/components/hooks/useAssetLibrary";
 import { createSprite } from "@/lib/core";
-import { Dialogue } from "@vnve/core";
+
+import { Dialogue, Sprite, isChild } from "@vnve/core";
 
 export function SceneCharacterBindingDialog({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const editor = useEditorStore((state) => state.editor);
@@ -33,12 +34,52 @@ export function SceneCharacterBindingDialog({ isOpen, onClose }: { isOpen: boole
   }, [activeScene]);
 
   useEffect(() => {
-    if (isOpen) {
-      const init: Record<string, any> = {};
-      for (const n of names) init[n] = null;
-      setNameAssetMap(init);
+    if (isOpen && activeScene) {
+      const loadBindings = async () => {
+        const init: Record<string, any> = {};
+        for (const n of names) init[n] = null;
+
+        const nameToAssetId = new Map<string, number>();
+        const spriteMap = new Map<string, Sprite>();
+
+        // 1. 收集场景中的 Character Sprite
+        activeScene.children.forEach((c) => {
+          // Check type property directly instead of instanceof check (isChild) because activeScene from store is a plain object
+          if ((c as any).type === "Sprite" && (c as any).assetType === DBAssetType.Character) {
+            spriteMap.set(c.name, c as Sprite);
+          }
+        });
+
+        // 2. 通过 speakerTargetName 查找绑定
+        activeScene.dialogues.forEach((d) => {
+          const s = d.speak?.speaker;
+          if (s?.name && s?.speakerTargetName) {
+            const sprite = spriteMap.get(s.speakerTargetName);
+            if (sprite) {
+              nameToAssetId.set(s.name, sprite.assetID);
+            }
+          }
+        });
+
+        // 3. 通过 label 查找绑定 (fallback)
+        spriteMap.forEach((sprite) => {
+          if (names.includes(sprite.label) && !nameToAssetId.has(sprite.label)) {
+            nameToAssetId.set(sprite.label, sprite.assetID);
+          }
+        });
+
+        // 4. 加载资源
+        for (const [name, assetId] of nameToAssetId.entries()) {
+          const asset = await getAssetById(assetId);
+          if (asset) {
+            init[name] = asset;
+          }
+        }
+        setNameAssetMap(init);
+      };
+      loadBindings();
     }
-  }, [isOpen, names]);
+  }, [isOpen, names, activeScene]);
 
   const handleSelectCharacter = async (name: string) => {
     const asset = await selectAsset(DBAssetType.Character);
@@ -48,55 +89,68 @@ export function SceneCharacterBindingDialog({ isOpen, onClose }: { isOpen: boole
   };
 
   const handleConfirm = async () => {
-    if (!activeScene) {
+    // Use editor.activeScene (instance) instead of store activeScene (plain object) to ensure methods exist
+    const sceneInstance = editor.activeScene;
+    if (!sceneInstance) {
       onClose();
       return;
     }
 
-    const addedSprites: Record<string, string> = {};
+    const nameToSpriteName = new Map<string, string>();
+    const newSprites: Sprite[] = [];
+    const updates: Array<{ name: string; source: string; assetID: number }> = [];
 
-    for (const [name, asset] of Object.entries(nameAssetMap)) {
+    for (const [logName, asset] of Object.entries(nameAssetMap)) {
       if (!asset) continue;
-      const sprite = await createSprite(asset, editor);
-      sprite.label = name;
-      editor.addChild(sprite);
-      addedSprites[name] = sprite.name;
+
+      let sprite = sceneInstance.findChildByLabel(logName) as Sprite;
+
+      if (!sprite) {
+        const newSprite = await createSprite(asset as DBAsset, editor);
+        newSprite.label = logName;
+        newSprites.push(newSprite);
+        nameToSpriteName.set(logName, newSprite.name);
+      } else {
+        nameToSpriteName.set(logName, sprite.name);
+        if (sprite.assetID !== asset.id) {
+          const state = asset.states.find((s) => s.id === asset.stateId) || asset.states[0];
+          const source = getAssetSourceURL(state);
+          updates.push({ name: sprite.name, source, assetID: asset.id });
+        }
+      }
     }
 
-    const mapped: Dialogue[] = activeScene.dialogues.map((d) => {
-      const n = d.speak?.speaker?.name ?? "";
-      const target = addedSprites[n];
-      if (target) {
-        const prevSpeaker = (d.speak?.speaker || { name: n }) as Dialogue["speak"]["speaker"];
-        return {
-          ...d,
-          speak: {
-            ...d.speak,
-            speaker: {
-              ...prevSpeaker,
-              name: prevSpeaker.name ?? n,
-              speakerTargetName: target,
-            },
-          },
-        } as Dialogue;
-      }
-      return d as Dialogue;
-    });
+    // Use editor.addChild to ensure transform listeners are attached for interactivity
+    newSprites.forEach((s) => editor.addChild(s));
 
     editor.updateActiveScene((scene) => {
-      scene.dialogues = mapped;
-      const firstTarget = Object.values(addedSprites)[0];
-      const firstName = Object.keys(addedSprites)[0] || (scene.config.speak?.speaker?.name ?? "");
-      if (firstTarget) {
-        scene.config.speak = {
-          ...scene.config.speak,
-          speaker: {
-            ...(scene.config.speak?.speaker || {}),
-            name: firstName,
-            targetName: firstTarget,
-          },
-        };
-      }
+      updates.forEach((u) => {
+        const s = scene.getChildByName(u.name) as Sprite;
+        if (s) {
+          s.changeSource(u.source);
+          s.assetID = u.assetID;
+          s.load();
+        }
+      });
+
+      scene.dialogues = scene.dialogues.map((d) => {
+        const logName = d.speak?.speaker?.name ?? "";
+        const spriteName = nameToSpriteName.get(logName);
+        if (spriteName) {
+          const prevSpeaker = (d.speak?.speaker || { name: logName }) as Dialogue["speak"]["speaker"];
+          return {
+            ...d,
+            speak: {
+              ...d.speak,
+              speaker: {
+                ...prevSpeaker,
+                speakerTargetName: spriteName,
+              },
+            },
+          } as Dialogue;
+        }
+        return d as Dialogue;
+      });
     });
 
     onClose();

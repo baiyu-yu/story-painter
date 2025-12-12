@@ -11,6 +11,9 @@ const pathSrc = path.resolve(__dirname, 'src')
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  esbuild: {
+    sourcemap: false,
+  },
   resolve: {
     alias: {
       '~/': `${pathSrc}/`,
@@ -29,6 +32,7 @@ export default defineConfig({
     }
   },
   build: {
+    sourcemap: false,
     rollupOptions: {
       input: {
         main: path.resolve(__dirname, 'index.html'),

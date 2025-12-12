@@ -18,7 +18,11 @@ const router = createHashRouter([
     element: <EditorPage />,
     errorElement: <RouteErrorElement />,
   },
-]);
+], {
+  future: {
+    v7_skipActionErrorRevalidation: true,
+  },
+});
 
 export default function App() {
   return <RouterProvider router={router}></RouterProvider>;

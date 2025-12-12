@@ -201,11 +201,15 @@ export function AssetLibrary() {
   const renderContent = () => {
     if (editingAsset) {
       return (
-        <AssetForm
-          asset={editingAsset}
-          onSubmit={handleSubmitAddAsset}
-          onCancel={handleCancelAddAsset}
-        />
+        <ScrollArea className="flex-1 overflow-y-auto">
+          <div className="pb-4">
+            <AssetForm
+              asset={editingAsset}
+              onSubmit={handleSubmitAddAsset}
+              onCancel={handleCancelAddAsset}
+            />
+          </div>
+        </ScrollArea>
       );
     } else if (selectingAsset) {
       return (
@@ -240,8 +244,8 @@ export function AssetLibrary() {
               {isSm && "新增"}
             </Button>
           </div>
-          <ScrollArea className="flex-grow">
-            <div className="flex gap-2 flex-wrap">
+          <ScrollArea className="flex-1 overflow-y-auto">
+            <div className="flex gap-2 flex-wrap pb-4">
               {assets?.map((asset) => {
                 return (
                   <AssetCard

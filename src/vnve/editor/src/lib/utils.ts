@@ -120,13 +120,36 @@ export function linesToText(lines: Dialogue["lines"], pureText = false) {
 }
 
 export function fetchAudioFile(url: string, name: string, ext = "mp3") {
+  const mime = getAudioMimeByExt(ext);
   return fetch(url)
     .then((response) => response.blob())
     .then((blob) => {
       const file = new File([blob], `${name}.${ext}`, {
-        type: `audio/${ext}`,
+        type: mime,
       });
 
       return file;
     });
+}
+
+export function getAudioMimeByExt(ext?: string) {
+  const e = (ext || "mp3").toLowerCase();
+  switch (e) {
+    case "mp3":
+      return "audio/mpeg";
+    case "wav":
+      return "audio/wav";
+    case "m4a":
+      return "audio/mp4";
+    case "aac":
+      return "audio/aac";
+    case "ogg":
+      return "audio/ogg";
+    case "flac":
+      return "audio/flac";
+    case "webm":
+      return "audio/webm";
+    default:
+      return `audio/${e}`;
+  }
 }

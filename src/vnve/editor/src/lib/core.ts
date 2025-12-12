@@ -574,7 +574,17 @@ export async function genTTS({
   sound: Sound;
   url: string;
 }> {
-  if (!ttsSettings || !ttsSettings.appid || !ttsSettings.token) {
+  if (!ttsSettings) {
+    throw new Error("请先完成语音合成设置");
+  }
+
+  const hasAppIdAndToken = ttsSettings.appid && ttsSettings.token;
+  const hasCustomConfig =
+    ttsSettings.customUrl &&
+    ttsSettings.customHeaders &&
+    ttsSettings.customBody;
+
+  if (!hasAppIdAndToken && !hasCustomConfig) {
     throw new Error("请先完成语音合成设置");
   }
 
@@ -615,10 +625,13 @@ export async function genTTS({
     const result = await longTextSynthesis({
       token: ttsSettings.token,
       appid: ttsSettings.appid,
+      customUrl: ttsSettings.customUrl,
+      customHeaders: ttsSettings.customHeaders,
+      customBody: ttsSettings.customBody,
       text,
       voiceType: voice,
     });
-    const file = await fetchAudioFile(result.audio_url, text.slice(0, 6));
+    const file = await fetchAudioFile(result.audio_url, text.slice(0, 6), result.audio_ext || "mp3");
     const soundAsset = await importAssetToProjectTmp(
       project.id,
       DBAssetType.Audio,
