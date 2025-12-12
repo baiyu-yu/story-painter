@@ -34,6 +34,7 @@ export default defineConfig({
         main: path.resolve(__dirname, 'index.html'),
         vnve: path.resolve(__dirname, 'vnve.html'),
         kpi: path.resolve(__dirname, 'kpi.html'),
+        pdf: path.resolve(__dirname, 'pdf.html'),
       },
     },
   },

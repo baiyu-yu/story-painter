@@ -94,6 +94,18 @@
                                  查看角色发言统计图表和总字数
                                </div>
                             </div>
+                            <div class="hand-drawn-box p-4 cursor-pointer hover:bg-gray-50 transition-colors" @click="openPdfPrinter">
+                               <n-flex align="center" justify="space-between">
+                                  <n-flex align="center">
+                                    <n-icon size="24"><icon-document-pdf /></n-icon>
+                                    <span class="text-lg font-bold">跑团日志PDF工具箱</span>
+                                  </n-flex>
+                                  <n-icon size="20"><icon-arrow-right /></n-icon>
+                               </n-flex>
+                               <div class="text-gray-500 text-sm mt-1">
+                                 生成精美的跑团日志PDF文档
+                               </div>
+                            </div>
                             <n-alert type="warning" class="mt-2" :show-icon="true">
                               实验中内容，如果有bug请和骰主反馈
                             </n-alert>
@@ -176,6 +188,18 @@
                              查看角色发言统计图表和总字数
                            </div>
                         </div>
+                        <div class="hand-drawn-box p-4 cursor-pointer hover:bg-gray-50 transition-colors" @click="openPdfPrinter">
+                           <n-flex align="center" justify="space-between">
+                              <n-flex align="center">
+                                <n-icon size="24"><icon-document-pdf /></n-icon>
+                                <span class="text-lg font-bold">跑团日志PDF工具箱</span>
+                              </n-flex>
+                              <n-icon size="20"><icon-arrow-right /></n-icon>
+                           </n-flex>
+                           <div class="text-gray-500 text-sm mt-1">
+                             生成精美的跑团日志PDF文档
+                           </div>
+                        </div>
                         <n-alert type="warning" class="mt-2" :show-icon="true">
                           实验中内容，如果有bug请和骰主反馈
                         </n-alert>
@@ -241,7 +265,6 @@
                               <n-checkbox label="多行" v-model:checked="isShowPreviewBBSPineapple" :border="true" @click="previewClick('bbspineapple')" />
                               <n-checkbox label="TRG" v-model:checked="isShowPreviewTRG" :border="true" @click="previewClick('trg')" />
                           </div>
-                          <n-button type="warning" dashed block @click="closePreviewMobile">返回编辑</n-button>
                       </div>
 
                       <!-- Export Buttons -->
@@ -298,7 +321,7 @@ import { LogItem, CharItem, packNameId } from "./logManager/types";
 import { setCharInfo } from './logManager/importers/_logImpoter'
 import { msgCommandFormat, msgImageFormat, msgIMUseridFormat, msgOffTopicFormat, msgAtFormat } from "./utils";
 import { NButton, NText, useMessage, useModal, useNotification, NDrawer, NDrawerContent, NFloatButton, NTabs, NTabPane, NGrid, NGridItem, NAlert } from "naive-ui";
-import { User, LogoGithub, Delete as IconDelete, Settings, Menu, Video as IconVideo, ArrowRight as IconArrowRight, ChartLine as IconChart } from '@vicons/carbon'
+import { User, LogoGithub, Delete as IconDelete, Settings, Menu, Video as IconVideo, ArrowRight as IconArrowRight, ChartLine as IconChart, DocumentPdf as IconDocumentPdf } from '@vicons/carbon'
 import { breakpointsTailwind, useBreakpoints, useDark, useToggle } from '@vueuse/core'
 import OptionView from "./components/OptionView.vue";
 import randomColor from "randomcolor";
@@ -436,6 +459,17 @@ const openKpiReviewer = () => {
   };
   localStorage.setItem('kpi_data', JSON.stringify(data));
   window.open('/kpi.html', '_blank');
+}
+
+const openPdfPrinter = () => {
+  rebuildAll();
+  const data = {
+    logs: logMan.curItems,
+    characters: store.pcList,
+    options: store.exportOptions
+  };
+  localStorage.setItem('pdf_printer_data', JSON.stringify(data));
+  window.open('/pdf.html', '_blank');
 }
 
 // 清空文本

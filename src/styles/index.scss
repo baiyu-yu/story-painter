@@ -10,3 +10,71 @@ body {
   margin: 0;
   font-size: 16px;
 }
+
+/* Hand Drawn Styles - Shared */
+.hand-drawn-box {
+  border: 2px solid #555;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 3px 255px 5px 25px / 255px 5px 225px 5px;
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+  transition: all 0.2s;
+}
+
+.hand-drawn-input, .hand-drawn-select, .hand-drawn-textarea {
+  border: 2px solid #666;
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  outline: none;
+  padding: 0.5rem;
+  background: white;
+  transition: all 0.2s;
+  width: 100%; /* Default to full width for neatness */
+}
+
+.hand-drawn-input:focus, .hand-drawn-select:focus, .hand-drawn-textarea:focus {
+  border-color: #333;
+  transform: scale(1.01);
+}
+
+.hand-drawn-btn {
+  border: 2px solid #555;
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  font-weight: bold;
+  padding: 0.25rem 0.75rem;
+  background: white;
+  transition: all 0.2s;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hand-drawn-btn:hover {
+  transform: rotate(-1deg) scale(1.05);
+  background: #fdfdfd;
+}
+
+.hand-drawn-btn-primary {
+  background: #3b82f6;
+  color: white;
+  border-color: #2563eb;
+}
+
+.hand-drawn-btn-primary:hover {
+  background: #2563eb;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
+}

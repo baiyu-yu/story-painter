@@ -238,37 +238,43 @@ const tableData = computed(() => {
 </script>
 
 <template>
-  <div class="kpi-reviewer flex flex-col gap-4 p-2 h-full overflow-y-auto">
+  <div class="kpi-reviewer flex flex-col gap-4 p-2 h-full overflow-y-auto bg-[#f0f0f0]">
     <div class="hand-drawn-box p-4 flex-shrink-0">
-      <div class="flex items-center justify-between mb-2">
-        <h3 class="text-lg font-bold">参数设置</h3>
-        <n-button size="small" @click="handleRefresh">刷新数据</n-button>
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold" style="font-family: 'Comic Sans MS', cursive;">参数设置</h3>
+        <button class="hand-drawn-btn" @click="handleRefresh">刷新数据</button>
       </div>
-      <n-grid :cols="2" :x-gap="12">
-          <n-grid-item>
-             <div class="flex items-center gap-2">
-                <span>分组大小：</span>
-                <n-select v-model:value="selectedGrouping" :options="groupingOptions" size="small" class="w-40" />
-             </div>
-          </n-grid-item>
-          <n-grid-item>
-              <div class="text-xs text-gray-500">{{ infoText }}</div>
-          </n-grid-item>
-      </n-grid>
+      <div class="flex flex-col md:flex-row gap-4">
+          <div class="flex items-center gap-2">
+            <span class="whitespace-nowrap font-bold text-gray-700">分组大小：</span>
+            <select v-model="selectedGrouping" class="hand-drawn-select w-40">
+                <option v-for="opt in groupingOptions" :key="opt.value" :value="opt.value">
+                    {{ opt.label }}
+                </option>
+            </select>
+          </div>
+          <div class="flex items-center">
+              <div class="text-xs text-gray-500 bg-white/50 p-2 rounded hand-drawn-box border-dashed border-gray-400" style="border-width: 1px;">
+                  {{ infoText }}
+              </div>
+          </div>
+      </div>
     </div>
 
-    <div class="chart-container hand-drawn-box p-2 bg-white/50 overflow-hidden flex-shrink-0" ref="chartContainer"></div>
+    <div class="chart-container hand-drawn-box p-2 bg-white overflow-hidden flex-shrink-0" ref="chartContainer"></div>
 
     <div class="hand-drawn-box p-4 flex flex-col flex-grow min-h-[300px]">
-      <h3 class="text-lg font-bold mb-2">详细数据</h3>
-      <div class="flex-grow overflow-hidden">
+      <h3 class="text-lg font-bold mb-2" style="font-family: 'Comic Sans MS', cursive;">详细数据</h3>
+      <div class="flex-grow overflow-hidden relative">
         <n-data-table
           :columns="columns"
           :data="tableData"
           :pagination="{ pageSize: 10 }"
           size="small"
-          class="h-full"
+          class="h-full absolute inset-0"
           flex-height
+          :bordered="false"
+          :single-line="false"
         />
       </div>
     </div>
@@ -280,5 +286,11 @@ const tableData = computed(() => {
   min-height: 400px;
   /* Ensure chart resizes properly */
   flex-shrink: 0; 
+}
+
+@media (max-width: 768px) {
+    .chart-container {
+        min-height: 300px;
+    }
 }
 </style>
