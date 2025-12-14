@@ -45,7 +45,10 @@ export function EditorPage() {
           };
           const id = await projectDB.add(defaultProject);
           editor.clear();
-          setProject({ id, ...defaultProject });
+          // Delay setProject to avoid race condition with auto-save or other listeners
+          setTimeout(() => {
+              setProject({ id, ...defaultProject });
+          }, 0);
 
           if (importFromLocalStorage()) {
             hasImported.current = true;

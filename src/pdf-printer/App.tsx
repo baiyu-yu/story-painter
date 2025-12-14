@@ -258,7 +258,7 @@ const App = () => {
             <div className="bg-white border-b p-2 px-4 flex justify-between items-center shadow-sm">
                 <h1 className="font-bold text-gray-700">跑团日志 PDF 生成预览</h1>
                 <div className="flex gap-2 items-center">
-                     <div className="text-xs text-gray-500">提示: PDF生成可能需要几秒钟，请耐心等待</div>
+                     <div className="text-xs text-gray-500">提示: PDF生成可能需要几十秒钟，请耐心等待</div>
                 </div>
             </div>
 

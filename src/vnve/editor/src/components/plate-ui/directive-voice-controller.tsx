@@ -26,6 +26,7 @@ import { createSound, genTTS } from "@/lib/core";
 import { DBAssetType, getAssetById, getAssetSourceURLByAsset } from "@/db";
 import { Sound } from "@vnve/core";
 import { Loader } from "../ui/loader";
+import { Dices } from "lucide-react";
 
 export function DirectiveVoiceController({ speak, lines, onChangeSpeak }) {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -266,6 +267,11 @@ export function DirectiveVoiceController({ speak, lines, onChangeSpeak }) {
             </Button>
           </div>
         </>
+      ) : speak.speaker?.isDice ? (
+        <div className="flex items-center justify-center w-full h-full px-1 text-xs text-muted-foreground">
+          <Dices className="w-3 h-3 mr-1" />
+          骰子角色 - 无需配音
+        </div>
       ) : (
         <div className="flex items-center justify-around w-full h-full px-1">
           <Button

@@ -279,7 +279,7 @@ export class Director {
         gsap.updateRoot(time);
 
         // 渲染当前的场景
-        if (this.ticker.ctx.scene) {
+        if (this.ticker.ctx.scene && !this.ticker.ctx.scene.destroyed) {
           this.renderer.render(this.ticker.ctx.scene);
           this.ticker.ctx.imageSource = this.renderer.view as unknown as CanvasImageSource;
         }

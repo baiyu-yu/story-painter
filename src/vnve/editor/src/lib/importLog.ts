@@ -1,4 +1,4 @@
-import { Scene, Dialogue, createDialogueScene, createTitleScene } from "@vnve/core";
+import { Dialogue, createDialogueScene } from "@vnve/core";
 import { useEditorStore } from "@/store";
 import { importAssetToProjectTmp, DBAssetType } from "@/db";
 import { createSprite } from "@/lib/core";
@@ -7,41 +7,62 @@ export interface LogItem {
   nickname: string;
   message: string;
   isDice: boolean;
-  role: string;
+  role?: string;
+  IMUserId?: string;
 }
 
 export interface CharItem {
   name: string;
-  role: string;
+  role: '主持人' | '角色' | '骰子' | '隐藏';
+  IMUserId?: string;
+  color?: string;
+}
+
+// 用于标记骰子角色的角色名集合
+let diceCharacterNames: Set<string> = new Set();
+
+// 导出函数，用于检查某个角色名是否是骰子角色
+export function isDiceCharacter(name: string): boolean {
+  return diceCharacterNames.has(name);
+}
+
+// 导出函数，获取所有骰子角色名
+export function getDiceCharacterNames(): Set<string> {
+  return diceCharacterNames;
 }
 
 export function importFromLocalStorage(): boolean {
   const dataStr = localStorage.getItem('vnve_import_data');
   if (!dataStr) return false;
-  
+
   try {
     const data = JSON.parse(dataStr) as { logs: LogItem[], characters: CharItem[] };
     localStorage.removeItem('vnve_import_data');
-    
+
     const editorStore = useEditorStore.getState();
     const editor = editorStore.editor;
     if (!editor) return false;
 
-    // Create map of role -> name
-    const roleMap = new Map<string, string>();
+    // 收集被标记为"骰子"角色的角色名
+    diceCharacterNames = new Set();
     if (data.characters) {
-      data.characters.forEach(c => roleMap.set(c.role, c.name));
+      data.characters.forEach(c => {
+        // 如果角色的 role 是 "骰子"，将其名字加入骰子角色集合
+        if (c.role === '骰子') {
+          diceCharacterNames.add(c.name);
+        }
+      });
     }
 
     // Create a new scene for the imported log
     // We can try to be smart and split scenes if there is a long pause or specific marker?
     // For now, let's create one big scene. User can split it later if we provide split tool (which we don't yet).
     // Or we can just create one scene.
-    
+
     const scene = createDialogueScene();
     scene.label = "完整log";
     scene.config.speak.effect = "typewriter";
-    
+
     // Clear default empty dialogue if any
     scene.dialogues = [];
 
@@ -62,9 +83,13 @@ export function importFromLocalStorage(): boolean {
             type: "p",
             children: [{ text: line }]
         }));
-        
-        const speakerName = roleMap.get(log.role) || log.nickname || "未知角色";
+
+        // 直接使用 nickname 作为角色名
+        const speakerName = log.nickname || "未知角色";
         if (speakerName) speakerSet.add(speakerName);
+
+        // 判断是否为骰子角色：log.isDice 为真，或者该角色被分配为"骰子"角色
+        const isDiceRole = !!log.isDice || diceCharacterNames.has(speakerName);
 
         const dialogue: Dialogue = {
             speak: {
@@ -73,7 +98,7 @@ export function importFromLocalStorage(): boolean {
                 effect: "typewriter",
                 speaker: {
                     name: speakerName,
-                    isDice: !!log.isDice,
+                    isDice: isDiceRole,
                     targetName: "",
                     autoShowSpeaker: {
                         inEffect: "Show"
@@ -106,7 +131,9 @@ export function importFromLocalStorage(): boolean {
         const nameToSpriteName = new Map<string, string>();
 
         for (const name of speakerSet) {
-          const file = new File([pngBytes], `${name}.png`, { type: "image/png" });
+          // 清理文件名中的特殊字符，避免 URL 解析问题
+          const safeName = name.replace(/[\/\\:*?"<>|]/g, '_');
+          const file = new File([pngBytes], `${safeName}.png`, { type: "image/png" });
           const asset = await importAssetToProjectTmp(project.id, DBAssetType.Character, file);
           const sprite = await createSprite(asset, editor);
           sprite.label = name;
@@ -115,21 +142,11 @@ export function importFromLocalStorage(): boolean {
         }
 
         // 绑定对白的 speakerTargetName 以便编辑器识别到角色
-        scene.dialogues = scene.dialogues.map((d) => {
+        scene.dialogues.forEach((d) => {
           const target = nameToSpriteName.get(d.speak.speaker?.name || "");
-          if (target) {
-            return {
-              ...d,
-              speak: {
-                ...d.speak,
-                speaker: {
-                  ...(d.speak.speaker || {}),
-                  speakerTargetName: target,
-                },
-              },
-            } as Dialogue;
+          if (target && d.speak.speaker) {
+            d.speak.speaker.speakerTargetName = target;
           }
-          return d;
         });
 
         // 触发一次场景刷新，确保编辑器状态与界面中的activeScene同步（包含角色列表）

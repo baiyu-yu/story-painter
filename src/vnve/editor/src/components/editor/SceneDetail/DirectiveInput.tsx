@@ -3,19 +3,23 @@ import {
   Plate,
   ParagraphPlugin,
   PlateEditor,
+  PlateLeaf,
 } from "@udecode/plate-common/react";
 import { DeletePlugin } from "@udecode/plate-select";
 
-import { ParagraphElement } from "@/components/plate-ui/paragraph-element";
 import { Editor } from "@/components/plate-ui/editor";
 import { FixedToolbar } from "@/components/plate-ui/fixed-toolbar";
 import { FixedToolbarButtons } from "@/components/plate-ui/fixed-toolbar-buttons";
-import { withPlaceholders } from "@/components/plate-ui/placeholder";
 import { DirectivePlugin } from "@/components/plugin/directive/DirectivePlugin";
 import { DirectiveElement } from "@/components/plate-ui/directive-element";
 import { DirectiveFloatingToolbar } from "@/components/plate-ui/directive-floating-toolbar";
 import { useEffect, useRef } from "react";
 import { DirectiveVoiceController } from "@/components/plate-ui/directive-voice-controller";
+
+// 自定义 Leaf 组件，过滤掉 leafPosition 属性以避免 React DOM 警告
+const CustomLeaf = ({ leafPosition, ...props }: any) => {
+  return <PlateLeaf {...props} />;
+};
 
 export function DirectiveInput({ value, onChange, onFocus, children }) {
   const editor: PlateEditor = usePlateEditor({
@@ -29,6 +33,7 @@ export function DirectiveInput({ value, onChange, onFocus, children }) {
     override: {
       components: {
         [DirectivePlugin.key]: DirectiveElement,
+        leaf: CustomLeaf,
       },
     },
     value: value.lines,

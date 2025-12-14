@@ -24,6 +24,7 @@ import {
 } from "@vnve/core";
 import { fetchAudioFile, linesToText } from "./utils";
 import { longTextSynthesis, NONE_VOICE } from "./tts";
+import { isDiceCharacter } from "./importLog";
 
 export async function createSprite(asset: DBAsset, editor: Editor) {
   const states = asset.states;
@@ -347,6 +348,7 @@ export async function story2Scenes(
             targetName: "",
             speakerTargetName: "Narrator",
             name: "",
+            isDice: false,
           },
         },
         lines: [
@@ -436,11 +438,12 @@ export async function story2Scenes(
     const characterTotal = characterList.size;
 
     for (const dialogue of item.dialogues) {
+      const isDice = dialogue.character.isDice ?? isDiceCharacter(dialogue.character.name);
       const speaker = {
         targetName: "", // 暂未使用, 目前都使用的Scene.config中targetName
         speakerTargetName: "",
         name: "",
-        isDice: dialogue.character.isDice
+        isDice: isDice
       };
       let changeSourceDirective;
 

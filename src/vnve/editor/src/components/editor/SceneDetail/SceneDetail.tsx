@@ -189,8 +189,15 @@ export function SceneDetail({ onClose }: { onClose?: () => void }) {
 
     showLoading("配音生成中");
 
+    let skippedDiceCount = 0;
     try {
       for (const [index, dialogue] of dialogues.entries()) {
+        // 跳过骰子角色的对话
+        if (dialogue.speak.speaker?.isDice) {
+          skippedDiceCount++;
+          continue;
+        }
+
         updateLoadingText(`正在生成第 ${index + 1} 条对白`);
 
         try {
@@ -220,8 +227,11 @@ export function SceneDetail({ onClose }: { onClose?: () => void }) {
           }
         }
       }
+      const successMsg = skippedDiceCount > 0
+        ? `场景对白生成成功! (跳过了 ${skippedDiceCount} 条骰子角色对话)`
+        : "场景对白生成成功!";
       toast({
-        title: "场景对白生成成功!",
+        title: successMsg,
       });
     } catch (error) {
       toast({

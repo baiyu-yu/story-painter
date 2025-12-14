@@ -10,6 +10,9 @@ import { Icons } from "@/components/icons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEffect, useState, useRef } from "react";
 import {
+  getAssetById,
+} from "@/db";
+import {
   StoryScene,
   parseStory,
   story2Scenes,
@@ -157,6 +160,28 @@ export function Text2SceneDialog({
   const handleStory = async (story: StoryScene[]) => {
     setStory(story);
     const result = await parseStory(story);
+
+    // Fallback: 如果数据库中找不到角色素材，尝试从编辑器当前的场景中查找
+    // 这种情况常见于刚刚通过 importLog 导入的临时角色
+    if (editor.scenes.length > 0) {
+      const activeScene = editor.activeScene || editor.scenes[0];
+      for (const name of Object.keys(result.characterAssetMap)) {
+        if (!result.characterAssetMap[name]) {
+          // 尝试在场景中查找同名的 Sprite
+          // 注意：importLog 创建的 Sprite label 就是角色名
+          const sprite = activeScene.children.find(
+            (c: any) => c.type === "Sprite" && c.label === name
+          ) as any;
+          
+          if (sprite && sprite.assetID) {
+             const asset = await getAssetById(sprite.assetID);
+             if (asset) {
+               result.characterAssetMap[name] = asset;
+             }
+          }
+        }
+      }
+    }
 
     setCharacterAssetMap(result.characterAssetMap);
     setBackgroundAssetMap(result.backgroundAssetMap);

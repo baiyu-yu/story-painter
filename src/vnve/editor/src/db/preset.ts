@@ -7,6 +7,9 @@ import maleDefault from "../assets/preset/character/male/default.webp";
 import maleHappy from "../assets/preset/character/male/happy.webp";
 import femaleDefault from "../assets/preset/character/female/default.webp";
 import femaleHappy from "../assets/preset/character/female/happy.webp";
+import diceLing from "../assets/preset/character/dice/ling.webp";
+import diceHeiyu from "../assets/preset/character/dice/heiyu.webp";
+import diceTakashiNatsume from "../assets/preset/character/dice/takashi-natsume.webp";
 import thingBookRed from "../assets/preset/thing/book/red.webp";
 import bgm1 from "../assets/preset/audio/bgm/bgm1.mp3";
 import bgm2 from "../assets/preset/audio/bgm/bgm2.mp3";
@@ -75,6 +78,23 @@ const PresetAssets = [
           {
             name: "开心",
             url: femaleHappy,
+          },
+        ],
+      },
+      {
+        name: "骰子",
+        states: [
+          {
+            name: "令",
+            url: diceLing,
+          },
+          {
+            name: "黑鱼",
+            url: diceHeiyu,
+          },
+          {
+            name: "夏目贵志",
+            url: diceTakashiNatsume,
           },
         ],
       },

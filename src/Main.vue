@@ -17,6 +17,9 @@
           <n-button type="primary" @click="backV1">官网</n-button>
         </n-flex>
       </n-flex>
+      <n-alert type="warning" class="mx-4 mb-2" :bordered="false">
+        如果没能显示Log内容，请重新使用 <n-text code>.log end</n-text> 获取一个新链接
+      </n-alert>
     </n-layout-header>
     
     <n-layout-content class="bg-transparent z-10 relative p-0 md:p-4">
@@ -421,8 +424,9 @@ const backV1 = () => {
 }
 
 const openVnve = () => {
-  rebuildAll();
-  // showPreview(); // rebuildAll calls showPreview
+  // 不使用 rebuildAll()，因为它会清空 lastText 并触发重新解析，
+  // 从而导致用户在角色分配中的修改被覆盖
+  showPreview();
   const data = {
     logs: previewItems.value,
     characters: store.pcList
@@ -452,7 +456,8 @@ const openVnve = () => {
 }
 
 const openKpiReviewer = () => {
-  rebuildAll();
+  // 不使用 rebuildAll()，避免覆盖用户的角色分配修改
+  showPreview();
   const data = {
     logs: logMan.curItems,
     characters: store.pcList
@@ -462,7 +467,8 @@ const openKpiReviewer = () => {
 }
 
 const openPdfPrinter = () => {
-  rebuildAll();
+  // 不使用 rebuildAll()，避免覆盖用户的角色分配修改
+  showPreview();
   const data = {
     logs: logMan.curItems,
     characters: store.pcList,

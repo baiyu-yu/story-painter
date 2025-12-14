@@ -616,6 +616,7 @@ export class Editor {
                 autoShowSpeaker: dialogueSpeakConfig.speaker?.autoShowSpeaker,
                 autoMaskOtherSpeakers:
                   dialogueSpeakConfig.speaker?.autoMaskOtherSpeakers,
+                isDice: dialogueSpeakConfig.speaker?.isDice,
               }
             : undefined,
           voice: dialogueSpeakConfig.voice?.targetName
@@ -646,6 +647,7 @@ export class Editor {
     this.removeTransformer();
 
     const now = performance.now();
+
     const scenes = this.scenes.slice(start, end).map((item) => item.clone());
 
     log.info("editor export cost:", performance.now() - now);

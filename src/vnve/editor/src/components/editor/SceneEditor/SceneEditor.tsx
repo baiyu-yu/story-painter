@@ -183,8 +183,9 @@ export function SceneEditor() {
     async (silent?: boolean) => {
       try {
         const date = new Date();
+        const content = editor.saveAsJSON();
         await projectDB.update(project.id, {
-          content: editor.saveAsJSON(),
+          content,
           time: date.getTime(),
         });
 
@@ -354,7 +355,7 @@ export function SceneEditor() {
   useEffect(() => {
     if (project) {
       const interval = setInterval(
-        async () => {
+        () => {
           handleSaveProject(true);
         },
         1000 * 60 * 1,
