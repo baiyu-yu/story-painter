@@ -186,7 +186,7 @@ function CustomModelsEditor({
   return (
     <div className="space-y-2">
       {pairs.map((pair, index) => (
-        <div key={index} className="flex gap-2 items-center">
+        <div key={index} className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center bg-muted/20 p-2 sm:p-0 rounded-md sm:bg-transparent">
           <Input
             className="flex-1 h-8 text-xs"
             placeholder="音色名称"
@@ -203,10 +203,11 @@ function CustomModelsEditor({
             type="button"
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0"
+            className="h-8 sm:w-8 w-full p-0 hover:bg-destructive/10 hover:text-destructive"
             onClick={() => handleRemove(index)}
           >
             <Icons.delete className="size-4" />
+            <span className="sm:hidden ml-2 text-xs">删除</span>
           </Button>
         </div>
       ))}
@@ -303,7 +304,7 @@ export function EditorSettingsDialog({
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="min-w-[600px] max-h-[80vh] overflow-y-auto"
+        className="w-[95vw] sm:w-full sm:max-w-[600px] max-h-[80vh] overflow-y-auto"
         onPointerDownOutside={(e) => e.preventDefault()}
       >
         <DialogHeader>
@@ -394,7 +395,7 @@ export function EditorSettingsDialog({
                 onSubmit={ttsForm.handleSubmit(onSubmitTTS)}
                 className="space-y-4"
               >
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
                     control={ttsForm.control}
                     name="appid"

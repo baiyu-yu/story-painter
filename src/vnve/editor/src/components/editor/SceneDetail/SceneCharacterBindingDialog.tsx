@@ -15,7 +15,7 @@ import { DBAssetType, getAssetById, DBAsset, getAssetSourceURL } from "@/db";
 import { useAssetLibrary } from "@/components/hooks/useAssetLibrary";
 import { createSprite } from "@/lib/core";
 
-import { Dialogue, Sprite, isChild } from "@vnve/core";
+import { Dialogue, Sprite, AnimatedGIF, Video, isChild } from "@vnve/core";
 
 export function SceneCharacterBindingDialog({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const editor = useEditorStore((state) => state.editor);
@@ -97,13 +97,13 @@ export function SceneCharacterBindingDialog({ isOpen, onClose }: { isOpen: boole
     }
 
     const nameToSpriteName = new Map<string, string>();
-    const newSprites: Sprite[] = [];
+    const newSprites: (Sprite | AnimatedGIF | Video)[] = [];
     const updates: Array<{ name: string; source: string; assetID: number }> = [];
 
     for (const [logName, asset] of Object.entries(nameAssetMap)) {
       if (!asset) continue;
 
-      let sprite = sceneInstance.findChildByLabel(logName) as Sprite;
+      let sprite = sceneInstance.findChildByLabel(logName) as Sprite | AnimatedGIF | Video;
 
       if (!sprite) {
         const newSprite = await createSprite(asset as DBAsset, editor);
@@ -125,7 +125,7 @@ export function SceneCharacterBindingDialog({ isOpen, onClose }: { isOpen: boole
 
     editor.updateActiveScene((scene) => {
       updates.forEach((u) => {
-        const s = scene.getChildByName(u.name) as Sprite;
+        const s = scene.getChildByName(u.name) as Sprite | AnimatedGIF | Video;
         if (s) {
           s.changeSource(u.source);
           s.assetID = u.assetID;
@@ -158,7 +158,7 @@ export function SceneCharacterBindingDialog({ isOpen, onClose }: { isOpen: boole
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px]">
+      <DialogContent className="w-[95vw] sm:w-full sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-base font-bold">角色绑定</DialogTitle>
           <DialogDescription>为当前场景对白中的角色名绑定角色立绘素材</DialogDescription>

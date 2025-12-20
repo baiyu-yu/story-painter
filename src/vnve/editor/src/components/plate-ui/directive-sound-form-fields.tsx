@@ -214,8 +214,8 @@ export const DirectiveSoundFormFields = forwardRef<
             control={form.control}
             name="params.loop"
             render={({ field }) => (
-              <FormItem className="space-y-0 flex flex-row items-center">
-                <FormLabel className="flex flex-col w-[4rem]">循环</FormLabel>
+              <FormItem className="space-y-0 flex flex-row items-center justify-between">
+                <FormLabel>循环</FormLabel>
                 <FormControl>
                   <Switch
                     checked={field.value}
@@ -230,8 +230,8 @@ export const DirectiveSoundFormFields = forwardRef<
             control={form.control}
             name="params.untilEnd"
             render={({ field }) => (
-              <FormItem className="space-y-0 flex flex-row items-center">
-                <FormLabel className="flex flex-col w-[4rem]">跨场景</FormLabel>
+              <FormItem className="space-y-0 flex flex-row items-center justify-between">
+                <FormLabel>跨场景</FormLabel>
                 <FormControl>
                   <Switch
                     checked={field.value}

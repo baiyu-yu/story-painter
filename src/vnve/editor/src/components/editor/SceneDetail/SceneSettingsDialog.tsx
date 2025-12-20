@@ -78,15 +78,15 @@ export const SceneSettingsDialog: React.FC<SceneSettingsDialogProps> = ({
             onChangeSpeak={handleChangeSpeak}
             disableCustomName={true}
           />
-          <div className="flex items-center">
-            <span className="text-sm font-medium w-[8rem]">自动展示背景</span>
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">自动展示背景</span>
             <Switch
               checked={settings.autoShowBackground}
               onCheckedChange={handleChangeAutoShowBackground}
             />
           </div>
-          <div className="flex items-center">
-            <span className="text-sm font-medium w-[8rem]">配音音量</span>
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-medium flex-shrink-0">配音音量</span>
             <div className="flex-1">
               <Slider
                 value={[settings.speak.voice?.volume ?? 1]}

@@ -299,6 +299,10 @@ export class AnimatedGIF extends Sprite implements DisplayChild {
     this._context = null as any;
   }
 
+  public changeSource(source: string) {
+    this.source = source;
+  }
+
   public async load() {
     const buffer = await fetch(this.source).then((res) => res.arrayBuffer());
 

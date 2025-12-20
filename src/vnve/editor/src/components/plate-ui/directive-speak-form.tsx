@@ -197,8 +197,8 @@ export function DirectiveSpeakForm({
           control={form.control}
           name="speaker.autoShowSpeaker"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center space-y-0">
-              <FormLabel className="w-[8rem]">自动显示发言角色</FormLabel>
+            <FormItem className="flex flex-row items-center justify-between space-y-0">
+              <FormLabel>自动显示发言角色</FormLabel>
               <FormControl>
                 <Switch
                   checked={field.value ? true : false}
@@ -213,8 +213,8 @@ export function DirectiveSpeakForm({
           control={form.control}
           name="speaker.autoMaskOtherSpeakers"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center space-y-0">
-              <FormLabel className="w-[8rem]">自动阴影其他角色</FormLabel>
+            <FormItem className="flex flex-row items-center justify-between space-y-0">
+              <FormLabel>自动阴影其他角色</FormLabel>
               <FormControl>
                 <Switch
                   checked={field.value ? true : false}

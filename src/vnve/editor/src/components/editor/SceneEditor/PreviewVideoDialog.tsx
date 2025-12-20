@@ -44,7 +44,7 @@ export const PreviewVideoDialog = forwardRef(
     return (
       <Dialog open={isOpen} onOpenChange={handleOpenChange}>
         <DialogContent
-          className="min-w-[80vw]"
+          className="w-[90vw] max-w-4xl"
           onPointerDownOutside={(e) => e.preventDefault()}
         >
           <DialogHeader>

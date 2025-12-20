@@ -70,7 +70,7 @@ export function SceneList({ onOpenSceneDetailDialog }) {
             <TableHeader>
               <TableRow>
                 <TableHead>场景</TableHead>
-                <TableHead className="w-[3rem] text-right">操作</TableHead>
+                <TableHead className="w-[60px] text-right">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

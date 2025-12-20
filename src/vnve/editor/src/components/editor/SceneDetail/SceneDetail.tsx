@@ -67,7 +67,7 @@ export function SceneDetail({ onClose }: { onClose?: () => void }) {
           },
           voice: {
             ...(dialogue.speak.voice || {}),
-            volume: settings.speak.voice.volume,
+            volume: settings.speak.voice?.volume ?? 1,
           },
         };
       });

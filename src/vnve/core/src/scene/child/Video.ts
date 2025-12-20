@@ -57,6 +57,10 @@ export class Video extends Sprite implements DisplayChild {
     this.volume = options.volume ?? 1;
   }
 
+  public changeSource(source: string) {
+    this.source = source;
+  }
+
   public async load() {
     if (this.source) {
       const fileURL = this.source;
