@@ -20,12 +20,12 @@ import { useMemo } from "react";
 import { VideoViewer } from "./VideoViewer";
 
 const AssetStateCardWidthMap = {
-  [DBAssetType.Background]: "240px",
-  [DBAssetType.Character]: "135px",
-  [DBAssetType.Thing]: "200px",
-  [DBAssetType.Dialog]: "240px",
-  [DBAssetType.Audio]: "150px",
-  [DBAssetType.Font]: "150px",
+  [DBAssetType.Background]: "clamp(180px, 80vw, 240px)",
+  [DBAssetType.Character]: "clamp(120px, 45vw, 135px)",
+  [DBAssetType.Thing]: "clamp(160px, 70vw, 200px)",
+  [DBAssetType.Dialog]: "clamp(180px, 85vw, 240px)",
+  [DBAssetType.Audio]: "clamp(140px, 70vw, 150px)",
+  [DBAssetType.Font]: "clamp(140px, 70vw, 150px)",
 };
 
 const ImgAssetClassNameMap = {
@@ -106,7 +106,7 @@ export function AssetStateCard({
 }) {
   return (
     <Card
-      className="rounded-md cursor-pointer"
+      className="rounded-md cursor-pointer shrink-0"
       style={{
         width: AssetStateCardWidthMap[type],
       }}

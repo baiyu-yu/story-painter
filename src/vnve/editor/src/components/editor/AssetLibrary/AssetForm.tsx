@@ -26,7 +26,6 @@ import {
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { CardContent, CardFooter } from "@/components/ui/card";
 import { Icons } from "@/components/icons";
 import FileSelector from "./FileSelector";
@@ -40,7 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { longTextSynthesis, NONE_VOICE, VOICE_OPTIONS, getVoiceOptions } from "@/lib/tts";
+import { longTextSynthesis, NONE_VOICE, getVoiceOptions } from "@/lib/tts";
 import { useSettingsStore } from "@/store/settings";
 import { useToast } from "@/components/hooks/use-toast";
 import { Loader } from "@/components/ui/loader";
@@ -301,8 +300,11 @@ export function AssetForm({
               <FormControl>
                 <div>
                   {fields.length > 0 && (
-                    <ScrollArea className="w-full whitespace-nowrap rounded-md border">
-                      <div className="flex w-full gap-2 p-2">
+                    <div
+                      className="w-full overflow-x-visible sm:overflow-x-auto overflow-y-hidden rounded-md border"
+                      style={{ WebkitOverflowScrolling: "touch" }}
+                    >
+                      <div className="flex flex-wrap sm:flex-nowrap w-full sm:w-max gap-2 p-2">
                         {fields.map((field, index) => (
                           <AssetStateCard
                             key={index}
@@ -352,8 +354,7 @@ export function AssetForm({
                           </AssetStateCard>
                         ))}
                       </div>
-                      <ScrollBar orientation="horizontal" />
-                    </ScrollArea>
+                    </div>
                   )}
                 </div>
               </FormControl>
