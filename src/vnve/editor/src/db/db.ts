@@ -1,7 +1,7 @@
 import { loadFont } from "@/lib/font";
 import { downloadFile, getFileInfo, openFilePicker } from "@/lib/utils";
 import Dexie, { Table } from "dexie";
-import "dexie-export-import";
+import { exportDB as dexieExport, importInto as dexieImport } from "dexie-export-import";
 
 // 临时资源目录前缀
 export const TMP_PREFIX = "__TMP__";
@@ -258,7 +258,7 @@ export async function getAssetByName(
 }
 
 export async function exportDB() {
-  const blob = await (db as any).export();
+  const blob = await dexieExport(db as any, { noTransaction: true });
   const dbObjectURL = URL.createObjectURL(blob);
   downloadFile("book", dbObjectURL, "vnve");
   URL.revokeObjectURL(dbObjectURL);
@@ -269,7 +269,10 @@ export async function importDB() {
   const file = files[0];
 
   if (file) {
-    await (db as any).import(file);
+    await dexieImport(db as any, file, {
+      noTransaction: true,
+      clearTablesBeforeImport: true,
+    });
   }
 }
 

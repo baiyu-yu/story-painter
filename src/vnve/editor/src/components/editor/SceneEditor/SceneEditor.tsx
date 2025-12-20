@@ -113,6 +113,8 @@ export function SceneEditor() {
 
     try {
       await importDB();
+      // 重新加载页面以刷新数据
+      window.location.reload();
     } catch (error) {
       toast({
         title: "导入作品失败！",

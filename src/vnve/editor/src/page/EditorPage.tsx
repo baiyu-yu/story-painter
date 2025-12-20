@@ -28,6 +28,7 @@ export function EditorPage() {
   const editor = useEditorStore((state) => state.editor);
   const hasImported = useRef(false);
   const setProject = useEditorStore((state) => state.setProject);
+  const project = useEditorStore((state) => state.project);
 
   const handleOpenSceneDetailDialog = () => {
     setIsOpenSceneDetailDialog(true);
@@ -47,16 +48,30 @@ export function EditorPage() {
           editor.clear();
           // Delay setProject to avoid race condition with auto-save or other listeners
           setTimeout(() => {
-              setProject({ id, ...defaultProject });
+            setProject({ id, ...defaultProject });
           }, 0);
 
           if (importFromLocalStorage()) {
             hasImported.current = true;
           }
         })();
+      } else if (!project) {
+        // 如果没有导入数据，尝试加载最近编辑的项目
+        (async () => {
+          const projects = await projectDB.reverse().toArray();
+          if (projects.length > 0) {
+            const lastProject = projects[0];
+            editor.clear();
+            if (lastProject.content) {
+              await editor.loadFromJSON(lastProject.content);
+              editor.setActiveSceneByIndex(0);
+            }
+            setProject(lastProject);
+          }
+        })();
       }
     }
-  }, [editor, setProject]);
+  }, [editor, setProject, project]);
 
   useEffect(() => {
     checkEnv().then((env) => {
