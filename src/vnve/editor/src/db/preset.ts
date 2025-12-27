@@ -10,6 +10,14 @@ import femaleHappy from "../assets/preset/character/female/happy.webp";
 import diceLing from "../assets/preset/character/dice/ling.webp";
 import diceHeiyu from "../assets/preset/character/dice/heiyu.webp";
 import diceTakashiNatsume from "../assets/preset/character/dice/takashi-natsume.webp";
+import teaHeiyuAngry from "../assets/preset/character/dice/茶版黑鱼-凶.png";
+import teaHeiyuAngryMouth from "../assets/preset/character/dice/茶版黑鱼-凶-张嘴.png";
+import teaHeiyuNormal from "../assets/preset/character/dice/茶版黑鱼-平常.png";
+import teaHeiyuNormalMouth from "../assets/preset/character/dice/茶版黑鱼-平常-张嘴.png";
+import teaHeiyuSquint from "../assets/preset/character/dice/茶版黑鱼-眯眼.png";
+import teaHeiyuSquintMouth from "../assets/preset/character/dice/茶版黑鱼-眯眼-张嘴.png";
+import teaHeiyuFlower from "../assets/preset/character/dice/茶版黑鱼-花花.png";
+import teaHeiyuFlowerMouth from "../assets/preset/character/dice/茶版黑鱼-花花-张嘴.png";
 import thingBookRed from "../assets/preset/thing/book/red.webp";
 import bgm1 from "../assets/preset/audio/bgm/bgm1.mp3";
 import bgm2 from "../assets/preset/audio/bgm/bgm2.mp3";
@@ -95,6 +103,38 @@ const PresetAssets = [
           {
             name: "夏目贵志",
             url: diceTakashiNatsume,
+          },
+          {
+            name: "茶版黑鱼-凶",
+            url: teaHeiyuAngry,
+          },
+          {
+            name: "茶版黑鱼-凶-张嘴",
+            url: teaHeiyuAngryMouth,
+          },
+          {
+            name: "茶版黑鱼-平常",
+            url: teaHeiyuNormal,
+          },
+          {
+            name: "茶版黑鱼-平常-张嘴",
+            url: teaHeiyuNormalMouth,
+          },
+          {
+            name: "茶版黑鱼-眯眼",
+            url: teaHeiyuSquint,
+          },
+          {
+            name: "茶版黑鱼-眯眼-张嘴",
+            url: teaHeiyuSquintMouth,
+          },
+          {
+            name: "茶版黑鱼-花花",
+            url: teaHeiyuFlower,
+          },
+          {
+            name: "茶版黑鱼-花花-张嘴",
+            url: teaHeiyuFlowerMouth,
           },
         ],
       },

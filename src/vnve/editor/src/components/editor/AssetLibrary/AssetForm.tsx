@@ -301,10 +301,10 @@ export function AssetForm({
                 <div>
                   {fields.length > 0 && (
                     <div
-                      className="w-full overflow-x-visible sm:overflow-x-auto overflow-y-hidden rounded-md border"
+                      className="w-full overflow-x-visible overflow-y-hidden rounded-md border"
                       style={{ WebkitOverflowScrolling: "touch" }}
                     >
-                      <div className="flex flex-wrap sm:flex-nowrap w-full sm:w-max gap-2 p-2">
+                      <div className="flex flex-wrap w-full gap-2 p-2">
                         {fields.map((field, index) => (
                           <AssetStateCard
                             key={index}
