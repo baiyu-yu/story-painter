@@ -35,6 +35,16 @@ import { useMedia } from "@/components/hooks/useMedia";
 import { useText2Scene } from "@/components/hooks/useText2Scene";
 import { Text2SceneDialog } from "./Text2SceneDialog";
 import { DirectiveNameMap } from "@/config";
+import { matchJSON } from "@/lib/utils";
+
+import { DraftManager } from "@/components/plate-ui/draft-manager";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 export function SceneEditor() {
   const initEditor = useEditorStore((state) => state.initEditor);
@@ -62,6 +72,7 @@ export function SceneEditor() {
     useState(false);
   const [isOpenEditorSettingsDialog, setIsOpenEditorSettingsDialog] =
     useState(false);
+  const [isOpenScriptDraftDialog, setIsOpenScriptDraftDialog] = useState(false);
   const previewVideoDialogRef = useRef(null);
   const [previewVideoRange, setPreviewVideoRange] = useState<number[]>([]);
   const [curExportVideoURL, setCurExportVideoURL] = useState<string | null>(
@@ -85,6 +96,21 @@ export function SceneEditor() {
     handleOpenAiText2Scene,
     handleCloseText2Scene,
   } = useText2Scene();
+
+  const handleOpenDraftScene = (content: any) => {
+    // Check for JSON format first
+    if (typeof content === 'string') {
+      const json = matchJSON(content);
+      if (json?.scenes) {
+        // If it's a JSON export, we might want to handle it differently, 
+        // but Text2SceneDialog handles JSON import too.
+        // However, usually "Drafts" in this context are text scripts.
+      }
+    }
+    
+    // We open the dialog in import mode, pre-filling the content
+    handleOpenImportText2Scene(content);
+  };
 
   useEffect(() => {
     const scriptText = localStorage.getItem('vnve_script_text');
@@ -388,6 +414,9 @@ export function SceneEditor() {
 
     return () => {
       window.removeEventListener("resize", adjustCanvasWidth);
+      if (director.current) {
+        director.current.destroy();
+      }
     };
   }, [initEditor]);
 
@@ -464,6 +493,9 @@ export function SceneEditor() {
             </MenubarItem>
             <MenubarItem onClick={handleOpenAiText2Scene}>
               智能剧本...
+            </MenubarItem>
+            <MenubarItem onClick={() => setIsOpenScriptDraftDialog(true)}>
+              草稿箱...
             </MenubarItem>
             <MenubarSeparator />
             <MenubarItem onClick={() => setIsOpenTemplateLibrary(true)}>
@@ -657,6 +689,26 @@ export function SceneEditor() {
           onClose={handleCloseText2Scene}
         ></Text2SceneDialog>
       )}
+      <Dialog open={isOpenScriptDraftDialog} onOpenChange={setIsOpenScriptDraftDialog}>
+        <DialogContent className="w-auto p-0">
+          <DialogHeader className="px-4 py-2">
+            <DialogTitle>草稿箱</DialogTitle>
+            <DialogDescription className="sr-only">
+              查看并导入之前保存的剧本草稿
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center pb-2">
+            <DraftManager 
+              type="script" 
+              readonly
+              onLoad={(content) => {
+                setIsOpenScriptDraftDialog(false);
+                handleOpenDraftScene(content);
+              }} 
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

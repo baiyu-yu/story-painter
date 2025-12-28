@@ -1,9 +1,29 @@
-import { Dialogue } from "@vnve/core";
+import type { Dialogue } from "@vnve/core";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+/**
+ * 从字符串中提取 JSON 对象
+ */
+export function matchJSON(content: string) {
+  const match = content.match(/\{[\s\S]*\}/);
+
+  if (!match) {
+    return null;
+  }
+
+  try {
+    const jsonStr = match[0];
+    const data = JSON.parse(jsonStr);
+
+    return data;
+  } catch {
+    return null;
+  }
 }
 
 export function downloadFile(
@@ -75,19 +95,6 @@ export function readTextFile(file: File): Promise<string> {
     reader.onerror = reject;
     reader.readAsText(file);
   });
-}
-
-export function matchJSON(content: string) {
-  const match = content.match(/\{[\s\S]*\}/);
-
-  try {
-    const jsonStr = match[0];
-    const data = JSON.parse(jsonStr);
-
-    return data;
-  } catch {
-    return null;
-  }
 }
 
 export function linesToText(lines: Dialogue["lines"], pureText = false) {

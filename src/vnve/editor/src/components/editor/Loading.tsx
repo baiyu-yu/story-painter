@@ -18,9 +18,9 @@ export function Loading() {
         disableClose={true}
         onPointerDownOutside={(e) => e.preventDefault()}
       >
-        <DialogHeader className="hidden">
-          <DialogTitle></DialogTitle>
-          <DialogDescription></DialogDescription>
+        <DialogHeader className="sr-only">
+          <DialogTitle>加载中</DialogTitle>
+          <DialogDescription>正在处理，请稍候</DialogDescription>
         </DialogHeader>
         <div className="w-full flex gap-2 justify-center items-center">
           <div className="font-bold text-xl">{loadingText}</div>

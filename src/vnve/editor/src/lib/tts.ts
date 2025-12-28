@@ -12,6 +12,8 @@ interface SynthesisParams {
   customUrl?: string;
   customHeaders?: string;
   customBody?: string;
+  enableCustom?: boolean;
+  pollLimit?: number;
 }
 
 interface SynthesisTaskResponse {
@@ -32,12 +34,12 @@ export async function longTextSynthesis(
   const {
     customUrl,
     customHeaders,
-    customBody
+    customBody,
+    enableCustom
   } = params;
 
-  // 只要配置了 customUrl 就走自定义逻辑，无论其他参数如何
-  // 这里必须直接返回，否则会继续向下执行走到 createSynthesisTask，那里硬编码了 /api/tts/ark
-  if (customUrl) {
+  // 只要配置了 enableCustom 且有 customUrl 就走自定义逻辑
+  if (enableCustom && customUrl) {
     return customSynthesis(params);
   }
 
@@ -50,6 +52,7 @@ export async function longTextSynthesis(
     token,
     appid,
     resourceId = "volc.tts_async.default",
+    pollLimit = 10,
   } = params;
   const timeoutDuration = 5 * 60 * 1000;
   const startTime = Date.now();
@@ -77,12 +80,19 @@ export async function longTextSynthesis(
   }
   const taskId = createTaskResponse.task_id;
   let result: SynthesisResult;
+  let pollCount = 0;
 
   // eslint-disable-next-line no-constant-condition
   while (true) {
     if (Date.now() - startTime > timeoutDuration) {
       throw new Error("合成任务超时，请检查服务状态。");
     }
+
+    if (pollCount >= pollLimit) {
+      throw new Error(`合成任务超过轮询次数上限 (${pollLimit})，请检查服务状态或增加上限。`);
+    }
+    pollCount++;
+
     const queryResponse = await querySynthesisResult({
       taskId,
       token,
@@ -147,7 +157,7 @@ async function customSynthesis(params: SynthesisParams): Promise<SynthesisResult
   }
 
   const isExternal = /^https?:\/\//i.test(customUrl!);
-  const backendBase = 'https://logbackend.fishwhite.top';
+  const backendBase = import.meta.env.DEV ? '/tts-proxy' : 'https://logbackend.fishwhite.top';
   const requestUrl = isExternal
     ? `${backendBase}/api/proxy?target=${encodeURIComponent(customUrl!)}`
     : customUrl!;
@@ -279,9 +289,9 @@ async function createSynthesisTask(
   const { text, voiceType, volume, speed, pitch, token, appid, resourceId } =
     params;
   const apiUrlMap: Record<string, string> = {
-    "volc.tts_async.default": "/api/tts/ark/api/v1/tts_async/submit",
+    "volc.tts_async.default": "https://openspeech.bytedance.com/api/v1/tts_async/submit",
     "volc.tts_async.emotion":
-      "/api/tts/ark/api/v1/tts_async_with_emotion/submit",
+      "https://openspeech.bytedance.com/api/v1/tts_async_with_emotion/submit",
   };
   const apiUrl = apiUrlMap[resourceId];
   const reqid = genUUID();
@@ -304,7 +314,10 @@ async function createSynthesisTask(
     pitch,
   };
 
-  const response = await fetch(apiUrl, {
+  const backendBase = import.meta.env.DEV ? '/tts-proxy' : 'https://logbackend.fishwhite.top';
+  const proxyUrl = `${backendBase}/api/proxy?target=${encodeURIComponent(apiUrl)}`;
+
+  const response = await fetch(proxyUrl, {
     method: "POST",
     headers,
     body: JSON.stringify(requestData),
@@ -321,9 +334,9 @@ async function querySynthesisResult(params: {
 }): Promise<SynthesisResult> {
   const { taskId, token, appid, resourceId } = params;
   const apiUrlMap: { [key: string]: string } = {
-    "volc.tts_async.default": "/api/tts/ark/api/v1/tts_async/query",
+    "volc.tts_async.default": "https://openspeech.bytedance.com/api/v1/tts_async/query",
     "volc.tts_async.emotion":
-      "/api/tts/ark/api/v1/tts_async_with_emotion/query",
+      "https://openspeech.bytedance.com/api/v1/tts_async_with_emotion/query",
   };
   const apiUrl = apiUrlMap[resourceId];
   const queryParams = `appid=${appid}&task_id=${taskId}`;
@@ -333,7 +346,11 @@ async function querySynthesisResult(params: {
     Authorization: `Bearer; ${token}`,
   };
 
-  const response = await fetch(`${apiUrl}?${queryParams}`, {
+  const backendBase = import.meta.env.DEV ? '/tts-proxy' : 'https://logbackend.fishwhite.top';
+  const targetUrl = `${apiUrl}?${queryParams}`;
+  const proxyUrl = `${backendBase}/api/proxy?target=${encodeURIComponent(targetUrl)}`;
+
+  const response = await fetch(proxyUrl, {
     method: "GET",
     headers,
   });

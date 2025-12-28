@@ -49,7 +49,9 @@ export const PreviewVideoDialog = forwardRef(
         >
           <DialogHeader>
             <DialogTitle>预览</DialogTitle>
-            <DialogDescription></DialogDescription>
+            <DialogDescription className="sr-only">
+              预览生成的视频效果
+            </DialogDescription>
             <canvas
               ref={previewCanvasRef}
               className="w-full aspect-[16/9]"

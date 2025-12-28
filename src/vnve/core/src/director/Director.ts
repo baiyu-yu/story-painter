@@ -215,6 +215,12 @@ export class Director {
     this.started = false;
     this.subtitles = [];
     soundController.reset();
+
+    // 尝试清理当前场景的 filters
+    if (this.ticker.ctx.scene) {
+      this.clearFilters(this.ticker.ctx.scene);
+    }
+
     // hack ticker
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
@@ -228,6 +234,38 @@ export class Director {
     this.ticker.lastTime = -1;
     this.ticker.ctx = {};
     this.ticker.asyncHandlers = [];
+
+    // 重置渲染器状态
+    if (this.renderer) {
+      this.renderer.render(new PIXI.Container());
+      this.renderer.state.reset();
+    }
+  }
+
+  public destroy() {
+    this.reset();
+    if (this.renderer) {
+      this.renderer.destroy(true);
+      this.renderer = null as any;
+    }
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    this.ticker = null as any;
+  }
+
+  private clearFilters(container: PIXI.Container) {
+    if (container.filters) {
+      container.filters.forEach((f) => f.destroy());
+      container.filters = null;
+    }
+    container.children.forEach((child) => {
+      if (child instanceof PIXI.Container) {
+        this.clearFilters(child);
+      } else if (child.filters) {
+        child.filters.forEach((f) => f.destroy());
+        child.filters = null;
+      }
+    });
   }
 
   private async parseSceneScript(

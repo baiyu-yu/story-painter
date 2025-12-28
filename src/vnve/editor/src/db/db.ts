@@ -97,19 +97,29 @@ export interface DBProject {
   content: string;
 }
 
+export interface DBDraft {
+  id?: number;
+  name: string;
+  content: any;
+  time: number;
+  type: "dialogue" | "script";
+}
+
 export class VNVEDexie extends Dexie {
   asset!: Table<DBAsset, number>;
   assetSource!: Table<DBAssetSource, number>;
   template!: Table<DBTemplate, number>;
   project!: Table<DBProject, number>;
+  draft!: Table<DBDraft, number>;
 
   constructor() {
     super("vnve2");
-    this.version(4).stores({
+    this.version(6).stores({
       asset: "++id, name, type, voice, states, [name+type]",
       assetSource: "++id, mime, blob, ext",
       template: "++id, name, type, content",
       project: "++id, name, time, content",
+      draft: "++id, name, time, type",
     });
   }
 }
@@ -119,6 +129,7 @@ export const assetDB = db.asset;
 export const assetSourceDB = db.assetSource;
 export const templateDB = db.template;
 export const projectDB = db.project;
+export const draftDB = db.draft;
 
 export function getAssetSourceURL(assetState: DBAssetState) {
   return assetState.url || `https://s/${assetState.id}.${assetState.ext}`;

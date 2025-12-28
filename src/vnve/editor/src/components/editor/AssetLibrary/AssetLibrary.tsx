@@ -272,7 +272,9 @@ export function AssetLibrary() {
       >
         <DialogHeader>
           <DialogTitle>素材库</DialogTitle>
-          <DialogDescription></DialogDescription>
+          <DialogDescription className="sr-only">
+            浏览和管理所有的角色、背景、音频等素材
+          </DialogDescription>
         </DialogHeader>
         {renderContent()}
       </DialogContent>

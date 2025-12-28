@@ -214,10 +214,24 @@ export class Speaker extends AnimationDirective<PIXI.Text> {
   }
 
   private removeMaskFilter(target: PIXI.DisplayObject) {
-    target.filters =
-      target.filters?.filter(
-        (filter) => (filter as Filter).name !== AUTO_MASK_FILTER_NAME,
-      ) || [];
+    if (!target.filters) return;
+
+    const filtersToKeep: PIXI.Filter[] = [];
+    const filtersToRemove: PIXI.Filter[] = [];
+
+    target.filters.forEach((filter) => {
+      if ((filter as Filter).name === AUTO_MASK_FILTER_NAME) {
+        filtersToRemove.push(filter);
+      } else {
+        filtersToKeep.push(filter);
+      }
+    });
+
+    if (filtersToRemove.length > 0) {
+      filtersToRemove.forEach((f) => f.destroy());
+    }
+
+    target.filters = filtersToKeep.length > 0 ? filtersToKeep : null;
   }
 
   private addMaskFilter(target: PIXI.DisplayObject, alpha: number) {
@@ -226,7 +240,7 @@ export class Speaker extends AnimationDirective<PIXI.Text> {
     filter.alpha = alpha;
 
     if (target.filters) {
-      target.filters.push(filter);
+      target.filters = [...target.filters, filter];
     } else {
       target.filters = [filter];
     }

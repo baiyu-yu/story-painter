@@ -581,14 +581,16 @@ export async function genTTS({
     throw new Error("请先完成语音合成设置");
   }
 
-  const hasAppIdAndToken = ttsSettings.appid && ttsSettings.token;
-  const hasCustomConfig =
-    ttsSettings.customUrl &&
-    ttsSettings.customHeaders &&
-    ttsSettings.customBody;
+  const enableCustom = ttsSettings.enableCustom;
 
-  if (!hasAppIdAndToken && !hasCustomConfig) {
-    throw new Error("请先完成语音合成设置");
+  if (enableCustom) {
+    if (!ttsSettings.customUrl) {
+      throw new Error("请先完成自定义语音合成设置");
+    }
+  } else {
+    if (!ttsSettings.appid || !ttsSettings.token) {
+      throw new Error("请先完成火山引擎语音合成设置");
+    }
   }
 
   const speakerTargetName = speak.speaker.speakerTargetName;
@@ -600,6 +602,13 @@ export async function genTTS({
     const speakerSprite = editor.activeScene.getChildByName(
       speakerTargetName,
     ) as Sprite;
+
+    if (!speakerSprite) {
+      throw new Error(
+        `找不到角色 "${speakerTargetName}"，请检查场景中是否已添加该角色。`,
+      );
+    }
+
     speakerAssetID = speakerSprite.assetID;
   }
 
@@ -628,6 +637,8 @@ export async function genTTS({
     const result = await longTextSynthesis({
       token: ttsSettings.token,
       appid: ttsSettings.appid,
+      pollLimit: ttsSettings.pollLimit,
+      enableCustom: ttsSettings.enableCustom,
       customUrl: ttsSettings.customUrl,
       customHeaders: ttsSettings.customHeaders,
       customBody: ttsSettings.customBody,

@@ -51,7 +51,9 @@ export function ExportVideoDialog({
       >
         <DialogHeader>
           <DialogTitle>导出</DialogTitle>
-          <DialogDescription></DialogDescription>
+          <DialogDescription className="sr-only">
+            导出生成的视频并下载
+          </DialogDescription>
         </DialogHeader>
         {!url && <Progress value={progress.value} />}
         {url && (

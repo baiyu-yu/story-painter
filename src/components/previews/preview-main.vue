@@ -1,5 +1,5 @@
 <template>
-  <div class="preview" id="preview" v-show="isShow">
+  <div class="preview h-full" id="preview" v-show="isShow">
     <div v-if="previewItems.length === 0">
       <div>染色失败，内容为空或无法识别此格式。</div>
       <div>已知支持的格式有: 海豹Log(json)、赵/Dice!原始文件、塔原始文件</div>

@@ -10,6 +10,8 @@ interface AISettings {
 interface TTSSettings {
   appid: string;
   token: string;
+  pollLimit?: number;
+  enableCustom?: boolean;
   customUrl?: string;
   customHeaders?: string;
   customBody?: string;

@@ -1,5 +1,5 @@
 import path from 'path'
-import { defineConfig } from 'vite'
+import { defineConfig, type PluginOption } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import react from '@vitejs/plugin-react'
 import legacy from '@vitejs/plugin-legacy'
@@ -43,8 +43,8 @@ export default defineConfig({
     },
   },
   plugins: [
-    vue(),
-    react(),
+    vue() as PluginOption,
+    react() as PluginOption,
     Components({
       // allow auto load markdown components under `./src/components/`
       extensions: ['vue', 'md'],
@@ -54,14 +54,23 @@ export default defineConfig({
         NaiveUiResolver(),
       ],
       dts: 'src/components.d.ts',
-    }),
+    }) as PluginOption,
     // legacy({
     //   targets: ['defaults', 'not IE 11']
     // })
   ],
   server: {
     proxy: {
-
+      '/tts-proxy': {
+        target: 'https://logbackend.fishwhite.top',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/tts-proxy/, ''),
+        configure: (proxy, options) => {
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            proxyReq.setHeader('Origin', 'https://logpainter.fishwhite.top');
+          });
+        }
+      },
       '/api': {
           changeOrigin: true,
           target: 'https://worker.firehomework.top/dice/api',

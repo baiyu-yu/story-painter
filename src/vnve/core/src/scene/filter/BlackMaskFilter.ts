@@ -17,18 +17,26 @@ export class BlackMaskFilter extends PIXI.ColorMatrixFilter implements Filter {
     const cloned = new BlackMaskFilter();
 
     copyTo(this, cloned, exact);
+    cloned.matrix = [...this.matrix] as any;
+    cloned.alpha = this.alpha;
 
     return cloned;
   }
 
   public toJSON() {
-    return toJSON(this);
+    return {
+      ...toJSON(this),
+      matrix: Array.from(this.matrix),
+    };
   }
 
   static fromJSON(json: AnyJSON) {
     const filter = new BlackMaskFilter();
 
     copyFromJSON(json, filter);
+    if (json.matrix) {
+      filter.matrix = json.matrix as any;
+    }
 
     return filter;
   }

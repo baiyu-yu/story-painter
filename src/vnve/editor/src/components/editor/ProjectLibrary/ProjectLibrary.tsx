@@ -79,7 +79,9 @@ export function ProjectLibrary({
       <DialogContent className="max-h-[80vh] overflow-auto">
         <DialogHeader>
           <DialogTitle>作品列表</DialogTitle>
-          <DialogDescription></DialogDescription>
+          <DialogDescription className="sr-only">
+            管理并打开之前创建的作品
+          </DialogDescription>
         </DialogHeader>
         <Table>
           <TableHeader>

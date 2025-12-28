@@ -27,6 +27,8 @@ import { cn } from "@/lib/utils";
 import { useAssetLibrary } from "../hooks/useAssetLibrary";
 import { createSprite } from "@/lib/core";
 
+import { DraftButton } from "./draft-button";
+
 const Narrator = {
   name: "Narrator",
   label: "旁白",
@@ -147,6 +149,14 @@ export function FixedToolbarButtons({ editor, speak, lines, onChangeSpeak, child
             ></DirectiveSpeakForm>
           </PopoverContent>
         </Popover>
+        <DraftButton
+          className="mx-1"
+          content={lines}
+          type="dialogue"
+          onLoad={(content) => {
+            editor.tf.setValue(content);
+          }}
+        />
         <ToolbarButton
           className="px-1 text-xs"
           onClick={() => handleSelectDirectiveType(DirectiveType.Animation)}

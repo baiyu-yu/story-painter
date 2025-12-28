@@ -280,14 +280,14 @@
                   </div>
 
                   <!-- Preview Content -->
-                  <div v-show="modeMain === 'preview'" class="flex-grow overflow-auto relative border-t border-dashed border-gray-300 pt-2">
+                  <div v-show="modeMain === 'preview'" class="flex-grow overflow-hidden flex flex-col relative border-t border-dashed border-gray-300 pt-2">
                       <n-message-provider>
-                        <preview-main :is-show="notMobile ? activeTab === 'preview' : isShowPreview" :preview-items="previewItems"></preview-main>
-                        <preview-role :is-show="notMobile ? activeTab === 'role' : isShowPreviewRole" :preview-items="previewItems"></preview-role>
-                        <preview-bbs :is-show="notMobile ? activeTab === 'bbs' : isShowPreviewBBS" :preview-items="previewItems"></preview-bbs>
-                        <preview-bbs-pineapple :is-show="notMobile ? activeTab === 'bbspineapple' : isShowPreviewBBSPineapple"
+                        <preview-main class="flex-1 min-h-0" :is-show="notMobile ? activeTab === 'preview' : isShowPreview" :preview-items="previewItems"></preview-main>
+                        <preview-role class="flex-1 min-h-0 overflow-y-auto" :is-show="notMobile ? activeTab === 'role' : isShowPreviewRole" :preview-items="previewItems"></preview-role>
+                        <preview-bbs class="flex-1 min-h-0" :is-show="notMobile ? activeTab === 'bbs' : isShowPreviewBBS" :preview-items="previewItems"></preview-bbs>
+                        <preview-bbs-pineapple class="flex-1 min-h-0" :is-show="notMobile ? activeTab === 'bbspineapple' : isShowPreviewBBSPineapple"
                           :preview-items="previewItems"></preview-bbs-pineapple>
-                        <preview-trg :is-show="notMobile ? activeTab === 'trg' : isShowPreviewTRG" :preview-items="previewItems"></preview-trg>
+                        <preview-trg class="flex-1 min-h-0" :is-show="notMobile ? activeTab === 'trg' : isShowPreviewTRG" :preview-items="previewItems"></preview-trg>
                       </n-message-provider>
                   </div>
               </div>
@@ -1093,10 +1093,14 @@ const nameChanged = (i: CharItem) => {
 }
 
 
+let isProgrammaticUpdate = false;
+
 logMan.ev.on('textSet', (text) => {
+  isProgrammaticUpdate = true;
   store.editor.dispatch({
     changes: { from: 0, to: store.editor.state.doc.length, insert: text }
   });
+  isProgrammaticUpdate = false;
 
   let m = new Map<string, CharItem>();
   for (let i of logMan.curItems) {
@@ -1120,6 +1124,8 @@ const onChange = (v: ViewUpdate) => {
       if (!v.viewportChanged && (v as any).flags === 0) {
         return;
       }
+      
+      if (isProgrammaticUpdate) return;
 
       const ranges = (v as any).changedRanges;
       if (ranges.length) {

@@ -64,7 +64,9 @@ export function SaveAsTemplateDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>保存为模板</DialogTitle>
-          <DialogDescription></DialogDescription>
+          <DialogDescription className="sr-only">
+            将当前场景保存为可重复使用的模板
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>

@@ -1,11 +1,17 @@
 import { useState } from "react";
 
+export interface ScriptDraft {
+  text: string;
+  enableSplit?: boolean;
+  splitSeparator?: string;
+}
+
 export function useText2Scene() {
   const [isOpen, setIsOpen] = useState(false);
   const [type, setType] = useState<"formatter" | "ai">();
-  const [initialScript, setInitialScript] = useState("");
+  const [initialScript, setInitialScript] = useState<string | ScriptDraft>("");
 
-  const handleOpenImportText2Scene = (script?: string) => {
+  const handleOpenImportText2Scene = (script?: string | ScriptDraft) => {
     setIsOpen(true);
     setType("formatter");
     if (script) setInitialScript(script);

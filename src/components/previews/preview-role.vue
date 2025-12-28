@@ -1,5 +1,5 @@
 <template>
-  <div class="preview" v-show="isShow">
+  <div class="preview h-full" v-show="isShow">
     <div v-if="Object.keys(groupedItems).length === 0" class="p-4 text-gray-500">
       无内容
     </div>

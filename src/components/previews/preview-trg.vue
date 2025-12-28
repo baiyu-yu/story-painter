@@ -10,7 +10,7 @@
     <n-checkbox label="添加语音合成标记" v-model:checked="store.trgIsAddVoiceMark" />
   </div>
 
-  <div class="preview" ref="preview" id="preview" v-show="isShow">
+  <div class="preview h-full flex flex-col" ref="preview" id="preview" v-show="isShow">
     <div style="position: absolute; right: 2rem; direction: rtl;">
       <n-button secondary type="primary" @click="copied" id="btnCopyPreviewTRG" style="z-index: 100">一键复制</n-button>
       <div class="mt-0.5 text-xs">注意: 长文本速度较慢</div>
@@ -23,7 +23,7 @@
     </div>
 
 		<VirtualList
-			class="list-dynamic scroll-touch scroller"
+			class="list-dynamic scroll-touch scroller flex-1 min-h-0"
 			:data-key="'index'"
 			:data-sources="previewItems"
 			:data-component="Item"

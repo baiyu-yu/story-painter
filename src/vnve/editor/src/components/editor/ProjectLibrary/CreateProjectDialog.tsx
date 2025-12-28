@@ -78,7 +78,9 @@ export function CreateProjectDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>创建新作品</DialogTitle>
-          <DialogDescription></DialogDescription>
+          <DialogDescription className="sr-only">
+            输入名称以创建一个新的可视化剧本作品
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>

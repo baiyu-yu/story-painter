@@ -6,7 +6,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import {
   Form,
   FormControl,
@@ -40,6 +41,8 @@ const llmFormSchema = z.object({
 const ttsFormSchema = z.object({
   token: z.string().optional(),
   appid: z.string().optional(),
+  pollLimit: z.coerce.number().min(1).default(10),
+  enableCustom: z.boolean().default(false),
   customUrl: z.string().optional(),
   customHeaders: z.string().optional(),
   customBody: z.string().optional(),
@@ -58,26 +61,62 @@ function KeyValueEditor({
   placeholderValue?: string;
 }) {
   const [pairs, setPairs] = useState<{ key: string; value: string }[]>([]);
+  const lastEmittedValueRef = useRef<string | null>(null);
+
+  const displayValue = (v: unknown) => {
+    if (typeof v === "string") return v;
+    try {
+      return JSON.stringify(v);
+    } catch {
+      console.error("Failed to stringify value in KeyValueEditor", v);
+      return "";
+    }
+  };
+
+  const parseValueMaybeJSON = (raw: string) => {
+    const trimmed = raw.trim();
+    if (!trimmed) return "";
+    if (
+      (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+      (trimmed.startsWith("[") && trimmed.endsWith("]"))
+    ) {
+      try {
+        return JSON.parse(trimmed);
+      } catch {
+        return raw;
+      }
+    }
+    return raw;
+  };
 
   useEffect(() => {
+    if (value === lastEmittedValueRef.current) return;
     try {
-      const parsed = JSON.parse(value || "{}");
-      const newPairs = Object.entries(parsed).map(([key, value]) => ({
+      const parsed = JSON.parse(value || "{}") as unknown;
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        setPairs([{ key: "", value: "" }]);
+        return;
+      }
+      const newPairs = Object.entries(parsed as Record<string, unknown>).map(
+        ([key, v]) => ({
         key,
-        value: String(value),
-      }));
+        value: displayValue(v),
+      }),
+      );
       setPairs(newPairs.length > 0 ? newPairs : [{ key: "", value: "" }]);
     } catch {
       setPairs([{ key: "", value: "" }]);
     }
-  }, []);
+  }, [value]);
 
   const updateValue = (newPairs: { key: string; value: string }[]) => {
     const obj = newPairs.reduce((acc, { key, value }) => {
-      if (key) acc[key] = value;
+      if (key) acc[key] = parseValueMaybeJSON(value);
       return acc;
-    }, {} as Record<string, string>);
-    onChange(JSON.stringify(obj));
+    }, {} as Record<string, unknown>);
+    const serialized = JSON.stringify(obj);
+    lastEmittedValueRef.current = serialized;
+    onChange(serialized);
     setPairs(newPairs);
   };
 
@@ -270,10 +309,12 @@ export function EditorSettingsDialog({
     onClose();
   }
 
-  function onSubmitTTS(values: Required<z.infer<typeof ttsFormSchema>>) {
+  function onSubmitTTS(values: z.infer<typeof ttsFormSchema>) {
     updateTTS({
       appid: values.appid || "",
       token: values.token || "",
+      pollLimit: values.pollLimit,
+      enableCustom: values.enableCustom,
       customUrl: values.customUrl,
       customHeaders: values.customHeaders,
       customBody: values.customBody,
@@ -293,6 +334,8 @@ export function EditorSettingsDialog({
       ttsForm.reset({
         appid: tts.appid,
         token: tts.token,
+        pollLimit: tts.pollLimit ?? 10,
+        enableCustom: tts.enableCustom ?? false,
         customUrl: tts.customUrl || "",
         customHeaders: tts.customHeaders || "",
         customBody: tts.customBody || "",
@@ -309,7 +352,9 @@ export function EditorSettingsDialog({
       >
         <DialogHeader>
           <DialogTitle>设置</DialogTitle>
-          <DialogDescription></DialogDescription>
+          <DialogDescription className="sr-only">
+            配置 AI 平台和语音合成等设置
+          </DialogDescription>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -426,11 +471,45 @@ export function EditorSettingsDialog({
                       </FormItem>
                     )}
                   />
+                  <FormField
+                    control={ttsForm.control}
+                    name="pollLimit"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>轮询上限</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min={1}
+                            placeholder="默认为10"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
 
                 <div className="border-t pt-4">
                   <div className="flex justify-between items-center mb-4">
-                    <h4 className="text-sm font-medium">自定义TTS服务 (可选)</h4>
+                    <FormField
+                      control={ttsForm.control}
+                      name="enableCustom"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormLabel className="text-sm font-medium">
+                            启用自定义TTS服务
+                          </FormLabel>
+                        </FormItem>
+                      )}
+                    />
                     <Button 
                       type="button" 
                       variant="ghost" 
@@ -442,101 +521,105 @@ export function EditorSettingsDialog({
                     </Button>
                   </div>
                   
-                  <FormField
-                    control={ttsForm.control}
-                    name="customUrl"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>请求地址</FormLabel>
-                        <FormControl>
-                          <Input placeholder="https://api.example.com/tts" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={ttsForm.control}
-                    name="customHeaders"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>请求头 (JSON)</FormLabel>
-                        <FormControl>
-                          {isRawMode ? (
-                            <Textarea 
-                              placeholder='{"Authorization": "Bearer {token}"}' 
-                              className="font-mono text-xs"
-                              rows={3}
-                              {...field} 
-                            />
-                          ) : (
-                            <KeyValueEditor 
-                              value={field.value || ""} 
-                              onChange={field.onChange} 
-                              placeholderKey="Header Name"
-                              placeholderValue="Header Value"
-                            />
-                          )}
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={ttsForm.control}
-                    name="customBody"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>请求体 (JSON)</FormLabel>
-                        <FormControl>
-                          {isRawMode ? (
-                            <Textarea 
-                              placeholder='{"text": "{text}", "voice": "{voice}"}' 
-                              className="font-mono text-xs"
-                              rows={3}
-                              {...field} 
-                            />
-                          ) : (
-                             <KeyValueEditor 
-                              value={field.value || ""} 
-                              onChange={field.onChange} 
-                              placeholderKey="Body Key"
-                              placeholderValue="Body Value ({text}, {voice}...)"
-                            />
-                          )}
-                        </FormControl>
-                        <FormDescription className="text-xs text-muted-foreground">
-                          可用变量: {"{text}"}, {"{voice}"}, {"{speed}"}, {"{volume}"}, {"{pitch}"}
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={ttsForm.control}
-                    name="customModels"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>可用音色列表 (JSON)</FormLabel>
-                        <FormControl>
-                          {isRawMode ? (
-                            <Textarea 
-                              placeholder='[{"name": "默认女声", "value": "female_01"}]' 
-                              className="font-mono text-xs"
-                              rows={3}
-                              {...field} 
-                            />
-                          ) : (
-                            <CustomModelsEditor 
-                              value={field.value || ""} 
-                              onChange={field.onChange} 
-                            />
-                          )}
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {ttsForm.watch("enableCustom") && (
+                    <>
+                      <FormField
+                        control={ttsForm.control}
+                        name="customUrl"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>请求地址</FormLabel>
+                            <FormControl>
+                              <Input placeholder="https://api.example.com/tts" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={ttsForm.control}
+                        name="customHeaders"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>请求头 (JSON)</FormLabel>
+                            <FormControl>
+                              {isRawMode ? (
+                                <Textarea 
+                                  placeholder='{"Authorization": "Bearer {token}"}' 
+                                  className="font-mono text-xs"
+                                  rows={3}
+                                  {...field} 
+                                />
+                              ) : (
+                                <KeyValueEditor 
+                                  value={field.value || ""} 
+                                  onChange={field.onChange} 
+                                  placeholderKey="Header Name"
+                                  placeholderValue="Header Value"
+                                />
+                              )}
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={ttsForm.control}
+                        name="customBody"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>请求体 (JSON)</FormLabel>
+                            <FormControl>
+                              {isRawMode ? (
+                                <Textarea 
+                                  placeholder='{"text": "{text}", "voice": "{voice}"}' 
+                                  className="font-mono text-xs"
+                                  rows={3}
+                                  {...field} 
+                                />
+                              ) : (
+                                <KeyValueEditor 
+                                  value={field.value || ""} 
+                                  onChange={field.onChange} 
+                                  placeholderKey="Body Key"
+                                  placeholderValue="Body Value ({text}, {voice}...)"
+                                />
+                              )}
+                            </FormControl>
+                            <FormDescription className="text-xs text-muted-foreground">
+                              可用变量: {"{text}"}, {"{voice}"}, {"{speed}"}, {"{volume}"}, {"{pitch}"}
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={ttsForm.control}
+                        name="customModels"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>可用音色列表 (JSON)</FormLabel>
+                            <FormControl>
+                              {isRawMode ? (
+                                <Textarea 
+                                  placeholder='[{"name": "默认女声", "value": "female_01"}]' 
+                                  className="font-mono text-xs"
+                                  rows={3}
+                                  {...field} 
+                                />
+                              ) : (
+                                <CustomModelsEditor 
+                                  value={field.value || ""} 
+                                  onChange={field.onChange} 
+                                />
+                              )}
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </>
+                  )}
                 </div>
 
                 <div className="flex justify-center gap-2">

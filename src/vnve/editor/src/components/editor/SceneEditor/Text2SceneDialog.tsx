@@ -32,6 +32,9 @@ import { matchJSON } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { DraftButton } from "@/components/plate-ui/draft-button";
+import { FileSelector } from "@/components/ui/file-selector";
+import { ScriptDraft } from "@/components/hooks/useText2Scene";
 
 export function Text2SceneDialog({
   isOpen,
@@ -41,7 +44,7 @@ export function Text2SceneDialog({
 }: {
   isOpen: boolean;
   type: "formatter" | "ai";
-  initialText?: string;
+  initialText?: string | ScriptDraft;
   onClose: () => void;
 }) {
   const editor = useEditorStore((state) => state.editor);
@@ -64,7 +67,13 @@ export function Text2SceneDialog({
 
   useEffect(() => {
     if (initialText && type === "formatter") {
-      setImportInputText(initialText);
+      if (typeof initialText === 'string') {
+        setImportInputText(initialText);
+      } else {
+        setImportInputText(initialText.text);
+        if (initialText.enableSplit !== undefined) setEnableSplit(initialText.enableSplit);
+        if (initialText.splitSeparator !== undefined) setSplitSeparator(initialText.splitSeparator);
+      }
     }
   }, [initialText, type]);
 
@@ -305,6 +314,47 @@ export function Text2SceneDialog({
     }, 0);
   };
 
+  const handleDraftLoad = (content: string | ScriptDraft) => {
+    let text = "";
+    if (typeof content === 'string') {
+        text = content;
+    } else {
+        text = content.text;
+        if (content.enableSplit !== undefined) setEnableSplit(content.enableSplit);
+        if (content.splitSeparator !== undefined) setSplitSeparator(content.splitSeparator);
+    }
+
+    // Check if the loaded text matches JSON format (direct screenplay import)
+    const json = matchJSON(text);
+    if (json?.scenes) {
+      handleImportScreenplay(text);
+      return;
+    }
+    
+    // Check if split mode is enabled and separator is present
+    if (enableSplit && splitSeparator && text.includes(splitSeparator)) {
+       // If it looks like a split script, we update the input text so user can verify before importing
+       // Or we could directly call handleImportScreenplay if we want "one-click" experience
+       // Current DraftButton logic just updates the state, let's stick to updating state
+       // But if we want to support "Smart Import" from draft, we should probably check content structure
+    }
+
+    setImportInputText(text);
+  };
+
+  const handleAiDraftLoad = (content: string | ScriptDraft) => {
+    if (typeof content === 'string') {
+      setAiInputText(content);
+    } else {
+      setAiInputText(content.text);
+    }
+  };
+
+  const handleFileSelect = async (file: File) => {
+    const text = await file.text();
+    setImportInputText(text);
+  };
+
   // AI
   const Step1 = () => {
     return (
@@ -314,7 +364,9 @@ export function Text2SceneDialog({
             <Icons.sparkles className="size-5" />
             智能剧本
           </DialogTitle>
-          <DialogDescription></DialogDescription>
+          <DialogDescription className="sr-only">
+            通过 AI 转换或生成剧本
+          </DialogDescription>
         </DialogHeader>
         <Tabs defaultValue="convert">
           <TabsList className="grid w-full grid-cols-2">
@@ -332,7 +384,13 @@ export function Text2SceneDialog({
               placeholder="请输入小说、故事原文"
               loading={loadingText}
               onComplete={(text) => handleAiScreenplay("convert", text)}
-            ></TextFileEditor>
+            >
+              <DraftButton
+                content={aiInputText}
+                type="script"
+                onLoad={setAiInputText}
+              />
+            </TextFileEditor>
           </TabsContent>
           <TabsContent value="generate">
             <TextFileEditor
@@ -341,7 +399,13 @@ export function Text2SceneDialog({
               placeholder="请输入剧情大纲"
               loading={loadingText}
               onComplete={(text) => handleAiScreenplay("generate", text)}
-            ></TextFileEditor>
+            >
+              <DraftButton
+                content={aiInputText}
+                type="script"
+                onLoad={setAiInputText}
+              />
+            </TextFileEditor>
           </TabsContent>
         </Tabs>
       </>
@@ -356,7 +420,9 @@ export function Text2SceneDialog({
           <DialogTitle className="flex items-center gap-2">
             导入剧本
           </DialogTitle>
-          <DialogDescription></DialogDescription>
+          <DialogDescription className="sr-only">
+            导入现有的剧本文件或粘贴剧本内容
+          </DialogDescription>
           <div className="flex items-center gap-4 py-2">
             <div className="flex items-center gap-2">
               <Switch 
@@ -389,11 +455,27 @@ export function Text2SceneDialog({
             onComplete={handleImportScreenplay}
             onChangeTemplate={setSceneTemplateName}
           >
-            {type === "ai" && (
-              <Button variant="outline" onClick={() => setStep(step - 1)}>
-                返回
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              <FileSelector
+                onFileSelect={handleFileSelect}
+                accept=".txt,.json"
+                disabled={!!loadingText}
+              />
+              <DraftButton
+                content={{
+                    text: importInputText,
+                    enableSplit,
+                    splitSeparator
+                }}
+                type="script"
+                onLoad={handleDraftLoad}
+              />
+              {type === "ai" && (
+                <Button variant="outline" onClick={() => setStep(step - 1)}>
+                  返回
+                </Button>
+              )}
+            </div>
           </TextFileEditor>
         </DialogHeader>
       </>

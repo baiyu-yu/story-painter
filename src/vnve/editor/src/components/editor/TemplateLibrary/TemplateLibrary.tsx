@@ -42,7 +42,9 @@ export function TemplateLibrary({
       <DialogContent className="max-h-[80vh] overflow-auto">
         <DialogHeader>
           <DialogTitle>模板列表</DialogTitle>
-          <DialogDescription></DialogDescription>
+          <DialogDescription className="sr-only">
+            管理已保存的场景模板
+          </DialogDescription>
         </DialogHeader>
         <Table>
           <TableHeader>
