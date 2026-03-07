@@ -1,183 +1,174 @@
 <template>
-  <div class="">
+  <div v-if="shouldRender">
     <div :style="source.isDice ? 'margin-top: 16px; margin-bottom: 16px' : ''">
-      <span :style="{ 'color': colorByName(source) }" v-if="source.isDice"># </span>
-      <span :style="{ 'color': colorByName(source) }" class="_nickname">{{ nicknameSolve(source) }}</span>
-      <span :style="{ 'color': colorByName(source) }" v-html="trgMessageSolve(source)"></span>
-      <div v-if="source.commandInfo" style="white-space: pre-wrap;">{{
-        trgCommandSolve(source)
-      }}</div>
-      <span v-if="store.trgIsAddVoiceMark && (!source.isDice)">{*}</span>
+      <span :style="{ color: colorByName(source) }" v-if="source.isDice"># </span>
+      <span :style="{ color: colorByName(source) }" class="_nickname">{{ nicknameSolve(source) }}</span>
+      <span :style="{ color: colorByName(source) }" v-html="renderedMessage"></span>
+      <div v-if="source.commandInfo" style="white-space: pre-wrap;">{{ trgCommandSolve(source) }}</div>
+      <span v-if="store.trgIsAddVoiceMark && !source.isDice">{*}</span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import { LogItem, packNameId } from '~/logManager/types';
 import { useStore } from '~/store';
-import { escapeHTML, msgCommandFormat, msgImageFormat, msgIMUseridFormat, msgOffTopicFormat, msgAtFormat } from '~/utils';
+import { escapeHTML, msgAtFormat, msgCommandFormat, msgImageFormat, msgIMUseridFormat, msgOffTopicFormat } from '~/utils';
 
 const store = useStore();
 
 const props = defineProps({
   source: {
     type: Object as () => LogItem,
-    default: () => { },
+    default: () => ({}),
   }
 });
 
 const colorByName = (i: LogItem) => {
-  // const info = store.pcMap.get(`${i.nickname}-`);
   const info = store.pcMap.get(packNameId(i));
   return info?.color || '#fff';
-}
-
-let findPC = (name: string) => {
-  for (let i of store.pcList) {
-    if (i.name === name) {
-      return i
-    }
-  }
-}
+};
 
 const nicknameSolve = (i: LogItem) => {
-  const options = store.exportOptions
-  const u = findPC(i.nickname)
-  let kpFlag = u?.role === '主持人' ? ',KP' : ''
-  return `[${i.nickname}${kpFlag}]:`
-  // [张安翔]:最基本的对话行
-}
+  return `[${i.nickname}]:`;
+};
 
 const nameReplace = (msg: string) => {
-  for (let i of store.pcList) {
-    msg = msg.replaceAll(`<${i.name}>`, `${i.name}`)
+  for (const i of store.pcList) {
+    msg = msg.replaceAll(`<${i.name}>`, `${i.name}`);
   }
-  return msg
-}
+  return msg;
+};
 
-const trgMessageSolve = (i: LogItem) => {
+const normalizeTrgMessage = (i: LogItem) => {
   if (store.isHiddenLogItem(i)) return '';
 
-  let msg = msgImageFormat(escapeHTML(i.message), store.exportOptions, true);
-  msg = msgAtFormat(msg, store.pcList);
+  const options = { ...store.exportOptions, imageHide: true };
+  let msg = msgImageFormat(escapeHTML(i.message), options, true);
+  msg = msgAtFormat(msg, store.pcList, store.exportOptions);
   msg = msgOffTopicFormat(msg, store.exportOptions, i.isDice);
   msg = msgCommandFormat(msg, store.exportOptions);
   msg = msgIMUseridFormat(msg, store.exportOptions, i.isDice);
-  msg = msgOffTopicFormat(msg, store.exportOptions, i.isDice); // 再过滤一次
+  msg = msgOffTopicFormat(msg, store.exportOptions, i.isDice);
 
-  let extra = ''
   if (i.isDice) {
-    msg = nameReplace(msg)
-    extra = '# '
+    msg = nameReplace(msg);
   }
-  msg = msg.trim().replaceAll('"', '').replaceAll('\\', '') // 移除反斜杠和双引号
-  const prefix = store.trgIsAddVoiceMark ? '{*}' : ''
-  return msg.replaceAll('<br />', '\n').replaceAll('\n', prefix + '<br /><span class="lf">\n</span>' + extra + nicknameSolve(i))
-}
+
+  return msg
+    .trim()
+    .replaceAll('"', '')
+    .replaceAll('\\', '')
+    .replaceAll('<br />', '\n')
+    .replaceAll('<br/>', '\n')
+    .replaceAll('<br>', '\n');
+};
+
+const renderedMessage = computed(() => {
+  const i = props.source as LogItem;
+  const msg = normalizeTrgMessage(i);
+  if (!msg) return '';
+
+  const extra = i.isDice ? '# ' : '';
+  const prefix = store.trgIsAddVoiceMark ? '{*}' : '';
+  return msg.replaceAll('\n', prefix + '<br /><span class="lf">\n</span>' + extra + nicknameSolve(i));
+});
+
+const shouldRender = computed(() => {
+  const i = props.source as LogItem;
+  return Boolean(renderedMessage.value.trim() || i.commandInfo);
+});
 
 const readDiceNum = (expr: string, defaultVal = 100) => {
-  let diceNum = defaultVal // 如果读不到，当作100处理
-  const m = /[dD](\d+)/.exec(expr)
+  let diceNum = defaultVal;
+  const m = /[dD](\d+)/.exec(expr);
   if (m) {
-    diceNum = parseInt(m[1])
+    diceNum = parseInt(m[1]);
   }
-  return diceNum
-}
+  return diceNum;
+};
 
 const trgCommandSolve = (item: LogItem) => {
   if (item.commandInfo) {
-    const ci = item.commandInfo
+    const ci = item.commandInfo;
     if (ci.rule === 'coc7') {
       switch (ci.cmd) {
-        case 'ra': {        
-          let items = []
-          for (let i of ci.items) {
-            let diceNum = readDiceNum(i.expr1)
+        case 'ra': {
+          const items = [];
+          for (const i of ci.items) {
+            const diceNum = readDiceNum(i.expr1);
             if (i.version == 101) {
-              items.push(`(${ci.pcName}的${i.expr2},${diceNum},${i.checkVal},${i.outcome })`)
+              items.push(`(${ci.pcName}鐨?{i.expr2},${diceNum},${i.checkVal},${i.outcome })`);
             } else {
-              items.push(`(${ci.pcName}的${i.expr2},${diceNum},${i.attrVal},${i.checkVal})`)
+              items.push(`(${ci.pcName}鐨?{i.expr2},${diceNum},${i.attrVal},${i.checkVal})`);
             }
           }
-          return `<dice>:${items.join(',')}`
-          break
+          return `<dice>:${items.join(',')}`;
         }
         case 'st': {
-          // { "cmd": "st", "items": [ { "attr": "hp", "isInc": false, "modExpr": "1d4", "type": "mod", "valNew": 63, "valOld": 65 } ], "pcName": "木落", "rule": "coc7" }
-          let items = []
-          for (let i of ci.items) {
+          const items = [];
+          for (const i of ci.items) {
             if (i.attr == 'hp') {
-              let maxNow = Math.max(i.valOld, i.valNew)
-              items.push(`<hitpoint>:(${ci.pcName},${maxNow},${i.valOld},${i.valNew})`)
+              const maxNow = Math.max(i.valOld, i.valNew);
+              items.push(`<hitpoint>:(${ci.pcName},${maxNow},${i.valOld},${i.valNew})`);
             }
-            // let diceNum = readDiceNum(i.exprs[0])
-            // items.push(`(${ci.pcName}的${i.exprs[0]},${diceNum},${i.sanOld},${i.checkVal})`)
           }
-          const tip = '# 请注意，当前版本需要手动调整下方最大生命值(第二项)\n'
-          return tip + `${items.join('\n')}`
-          break
+          const tip = '# 璇锋敞鎰忥紝褰撳墠鐗堟湰闇€瑕佹墜鍔ㄨ皟鏁翠笅鏂规渶澶х敓鍛藉€?绗簩椤?\n';
+          return tip + `${items.join('\n')}`;
         }
         case 'sc': {
-          // { "cmd": "sc", "cocRule": 11, "items": [ { "checkVal": 55, "exprs": [ "d100", "0", "1" ], "rank": -2, "sanNew": 0, "sanOld": 0 } ], "pcName": "木落", "rule": "coc7" }
-          let items = []
-          for (let i of ci.items) {
-            let diceNum = readDiceNum(i.exprs[0])
-            items.push(`(${ci.pcName}的${i.exprs[0]},${diceNum},${i.sanOld},${i.outcome ?? i.checkVal})`)
+          const items = [];
+          for (const i of ci.items) {
+            const diceNum = readDiceNum(i.exprs[0]);
+            items.push(`(${ci.pcName}鐨?{i.exprs[0]},${diceNum},${i.sanOld},${i.outcome ?? i.checkVal})`);
           }
-          return `<dice>:${items.join(',')}`
-          break
+          return `<dice>:${items.join(',')}`;
         }
       }
     }
     if (ci.rule === 'dnd5e') {
       switch (ci.cmd) {
         case 'st': {
-          // {"cmd":"st","items":[{"attr":"hp","isInc":false,"modExpr":"3","type":"mod","valNew":7,"valOld":10}],"pcName":"海岸线","rule":"dnd5e"}
-          let items = []
-          let hasHp = false
-          for (let i of ci.items || []) {
+          const items = [];
+          let hasHp = false;
+          for (const i of ci.items || []) {
             if (i.attr == 'hp') {
-              let maxNow = Math.max(i.valOld, i.valNew)
-              items.push(`<hitpoint>:(${ci.pcName},${maxNow},${i.valOld},${i.valNew})`)
-              hasHp = true
+              const maxNow = Math.max(i.valOld, i.valNew);
+              items.push(`<hitpoint>:(${ci.pcName},${maxNow},${i.valOld},${i.valNew})`);
+              hasHp = true;
             }
           }
-          let tip = ''
+          let tip = '';
           if (hasHp) {
-            let tip = '# 请注意，当前版本需要手动调整下方最大生命值(第二项)\n'
+            tip = '# 璇锋敞鎰忥紝褰撳墠鐗堟湰闇€瑕佹墜鍔ㄨ皟鏁翠笅鏂规渶澶х敓鍛藉€?绗簩椤?\n';
           }
-          return tip + `${items.join('\n')}`
-          break
+          return tip + `${items.join('\n')}`;
         }
         case 'rc': {
-          // {"cmd":"rc","items":[{"expr":"D20 + 体质豁免","reason":"体质豁免","result":15}],"pcName":"阿拉密尔•利亚顿","rule":"dnd5e"}
-          let items = []
-
-          let tip = ''
-          for (let i of ci.items) {
-            let diceNum = readDiceNum(i.expr, 20)
-            items.push(`(${ci.pcName}的${i.reason}检定,${diceNum},NA,${i.result})`)
-            tip = '# 请注意，DND的最大面数可能为 D20+各种加值，需要手动二次调整\n'
+          const items = [];
+          let tip = '';
+          for (const i of ci.items) {
+            const diceNum = readDiceNum(i.expr, 20);
+            items.push(`(${ci.pcName}鐨?{i.reason}妫€瀹?${diceNum},NA,${i.result})`);
+            tip = '# 璇锋敞鎰忥紝DND鐨勬渶澶ч潰鏁板彲鑳戒负 D20+鍚勭鍔犲€硷紝闇€瑕佹墜鍔ㄤ簩娆¤皟鏁碶n';
           }
-          return tip + `<dice>:${items.join(',')}`
-          break
+          return tip + `<dice>:${items.join(',')}`;
         }
       }
     }
 
     switch (ci.cmd) {
       case 'roll': {
-          // { "cmd": "roll", "items": [ { "dicePoints": 100, "expr": "D100", "result": 30 } ], "pcName": "木落" }
-          let items = []
-          for (let i of ci.items) {
-            let diceNum = readDiceNum(i.expr)
-            items.push(`(${ci.pcName}的${i.expr},${diceNum},NA,${i.result})`)
-          }
-          return `<dice>:${items.join(',')}`
-          break
+        const items = [];
+        for (const i of ci.items) {
+          const diceNum = readDiceNum(i.expr);
+          items.push(`(${ci.pcName}鐨?{i.expr},${diceNum},NA,${i.result})`);
         }
+        return `<dice>:${items.join(',')}`;
+      }
     }
-    return ci
+    return ci;
   }
-}
+};
 </script>

@@ -39,6 +39,12 @@ export const useStore = defineStore('main', {
         yearHide: true,
         textIndentAll: false,
         textIndentFirst: true,
+        expandForward: false,
+        filterCqForward: false,
+        filterCqImage: false,
+        filterCqAt: false,
+        filterCqReply: false,
+        filterCqJson: false,
       }
     }
   },

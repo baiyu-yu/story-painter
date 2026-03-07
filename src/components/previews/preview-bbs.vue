@@ -64,8 +64,6 @@ let clip: ClipboardJS;
 
 watch(() => props.isShow, (val: any) => {
   if (val) {
-    store.exportOptions.imageHide = true
-
     nextTick(() => {
       if (clip) return;
       clip = new ClipboardJS('#btnCopyPreviewBBS', {

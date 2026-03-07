@@ -56,7 +56,7 @@ export class RenderedLogImporter extends LogImporter {
         item.nickname = m[3];
 
         if (m[4]) {
-          item.IMUserId = 'QQ:' + m[4].slice(1, -1);
+          item.IMUserId = m[4].slice(1, -1);
         } else {
           item.IMUserId = this.getAutoIMUserId(store.pcList.length, item.nickname);
         }

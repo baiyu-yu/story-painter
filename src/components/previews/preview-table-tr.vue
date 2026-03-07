@@ -72,7 +72,7 @@
     if (store.isHiddenLogItem(i)) return '';
   
     let msg = msgImageFormat(escapeHTML(i.message), store.exportOptions, true);
-    msg = msgAtFormat(msg, store.pcList);
+    msg = msgAtFormat(msg, store.pcList, store.exportOptions);
     msg = msgOffTopicFormat(msg, store.exportOptions, i.isDice);
     msg = msgCommandFormat(msg, store.exportOptions);
     msg = msgIMUseridFormat(msg, store.exportOptions, i.isDice);

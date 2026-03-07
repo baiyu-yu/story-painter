@@ -1,4 +1,7 @@
+import { filterCqTypes } from './cq';
+
 export * from './types';
+export * from './cq';
 // export * from './helpers';
 
 /**
@@ -32,7 +35,7 @@ export function getCanvasFontSize(el = document.body) {
 
 export function msgImageFormat(msg: string, options: any, htmlText = false) {
   // 替换图片、表情
-  if (options.imageHide) {
+  if (options.imageHide || options.filterCqImage) {
     msg = msg.replaceAll(/\[CQ:(image|face)(,summary=\[动画表情\])?,[^\]]+\]/g, '')
   } else {
     if (htmlText) {
@@ -54,7 +57,7 @@ export function msgImageFormat(msg: string, options: any, htmlText = false) {
     }
   }
 
-  if (options.imageHide) {
+  if (options.imageHide || options.filterCqImage) {
     msg = msg.replaceAll(/\[mirai:(image|marketface):[^\]]+\]/g, '')
   } else {
     if (htmlText) {
@@ -62,7 +65,7 @@ export function msgImageFormat(msg: string, options: any, htmlText = false) {
     }
   }
 
-  if (options.imageHide) {
+  if (options.imageHide || options.filterCqImage) {
     msg = msg.replaceAll(/\[(image|图):[^\]]+\]/g, '')
   } else {
     if (htmlText) {
@@ -105,7 +108,7 @@ export function msgIMUseridFormat(msg: string, options: any, isDice = false) {
   }
 
   // 过滤其他任何CQ码，除了at与image
-  msg = msg.replaceAll(/\[CQ:(?!image|at).+?,[^\]]+\]/g, "");
+  msg = filterCqTypes(msg, options);
   // 过滤mirai
   msg = msg.replaceAll(/\[mirai:(?!image).+?:[^\]]+\]/g, '')
 
@@ -120,7 +123,10 @@ export function msgIMUseridFormat(msg: string, options: any, isDice = false) {
 // QQ的回复是CQ码 [CQ:at,qq=12345678]
 // discord的回复是 <@8181007086111111>
 // kook的回复是 (met)176031111(met)
-export function msgAtFormat(msg: string, pcList: any) {
+export function msgAtFormat(msg: string, pcList: any, options?: any) {
+  if (options?.filterCqAt) {
+    return msg.replace(/\[CQ:at,[^\]]+\]/g, '');
+  }
   // qq的回复会给出两个连续的相同CQ码，如[CQ:at,qq=123456] [CQ:at,qq=123456]，预先处理只保留一个
   let qqReplyPattern = /((\[CQ:at,[^\]]*qq=([0-9]+)[^\]]*\])) \[CQ:at,[^\]]*qq=\3[^\]]*\]/g;
   if (msg.match(qqReplyPattern)) {
@@ -184,4 +190,23 @@ export function escapeHTML(html: string) {
   const div = document.createElement('div');
   div.appendChild(document.createTextNode(html));
   return div.innerHTML;
+}
+
+export function formatLogMessage(
+  message: string,
+  options: any,
+  pcList: any,
+  isDice = false,
+  htmlText = false,
+  optionOverrides: Record<string, any> = {},
+) {
+  const mergedOptions = { ...options, ...optionOverrides };
+  let msg = htmlText ? escapeHTML(message) : message;
+  msg = msgImageFormat(msg, mergedOptions, htmlText);
+  msg = msgAtFormat(msg, pcList, mergedOptions);
+  msg = msgOffTopicFormat(msg, mergedOptions, isDice);
+  msg = msgCommandFormat(msg, mergedOptions);
+  msg = msgIMUseridFormat(msg, mergedOptions, isDice);
+  msg = msgOffTopicFormat(msg, mergedOptions, isDice);
+  return msg;
 }

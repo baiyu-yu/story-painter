@@ -1,10 +1,9 @@
 <template>
-  <div class="">
-    <span style="color: #aaa" class="_time" v-if="!store.exportOptions.timeHide">[color={{ getTimeColor() }}]{{ timeSolve(source)
-    }}[/color]</span>
-    <span :style="{ 'color': colorByName(source) }">[color={{ colorByName(source) }}]
+  <div v-if="shouldRender">
+    <span style="color: #aaa" class="_time" v-if="!store.exportOptions.timeHide">[color={{ getTimeColor() }}]{{ timeSolve(source) }}[/color]</span>
+    <span :style="{ color: colorByName(source) }">[color={{ colorByName(source) }}]
       <span class="_nickname">{{ nicknameSolve(source) }}</span>
-      <span v-html="bbsMessageSolve(source)"></span>
+      <span v-html="renderedMessage"></span>
       [/color]</span>
   </div>
 </template>
@@ -14,83 +13,76 @@ import dayjs from 'dayjs';
 import { computed } from 'vue';
 import { LogItem, packNameId } from '~/logManager/types';
 import { useStore } from '~/store';
-import { escapeHTML, msgCommandFormat, msgImageFormat, msgIMUseridFormat, msgOffTopicFormat, msgAtFormat } from '~/utils';
+import { escapeHTML, formatLogMessage } from '~/utils';
 import { gray } from 'tailwindcss/colors';
 
 const store = useStore();
 
-defineProps({
+const props = defineProps({
   source: {
     type: Object as () => LogItem,
-    default: () => { },
+    default: () => ({}),
   },
 });
 
 const getTimeColor = () => {
   if (store.bbsUseColorName) return 'silver';
-  return gray['400']
-}
+  return gray['400'];
+};
 
 const colorByName = (i: LogItem) => {
-  // const info = store.pcMap.get(`${i.nickname}-`);
   const info = store.pcMap.get(packNameId(i));
   if (store.bbsUseColorName) {
     return store.colorHexToName(info?.color || '#ffffff');
   }
   return info?.color || '#ffffff';
-}
+};
 
 const nicknameSolve = (i: LogItem) => {
-  let userid = '(' + i.IMUserId + ')'
-  const options = store.exportOptions
-  if (options.userIdHide) {
-    userid = ''
+  let userid = '(' + i.IMUserId + ')';
+  if (store.exportOptions.userIdHide) {
+    userid = '';
   }
-  return `<${i.nickname}${userid}>`
-}
-
+  return `<${i.nickname}${userid}>`;
+};
 
 const timeSolve = (i: LogItem) => {
-  let timeText = i.time.toString()
-  const options = store.exportOptions
+  let timeText = i.time.toString();
+  const options = store.exportOptions;
   if (typeof i.time === 'number' && i.time !== 0) {
-    timeText = dayjs.unix(i.time).format(options.yearHide ? 'HH:mm:ss' : 'YYYY/MM/DD HH:mm:ss')
+    timeText = dayjs.unix(i.time).format(options.yearHide ? 'HH:mm:ss' : 'YYYY/MM/DD HH:mm:ss');
+  } else if (i.timeText) {
+    timeText = i.timeText;
   } else {
-    if (i.timeText) {
-      timeText = i.timeText
-    } else {
-      timeText = dayjs.unix(i.time).format(options.yearHide ? 'HH:mm:ss' : 'YYYY/MM/DD HH:mm:ss')
-    }
+    timeText = dayjs.unix(i.time).format(options.yearHide ? 'HH:mm:ss' : 'YYYY/MM/DD HH:mm:ss');
   }
   if (options.timeHide) {
-    timeText = ''
+    timeText = '';
   }
-  return timeText
-}
+  return timeText;
+};
 
 const nameReplace = (msg: string) => {
-  for (let i of store.pcList) {
-    msg = msg.replaceAll(`<${i.name}>`, `${i.name}`)
+  for (const i of store.pcList) {
+    msg = msg.replaceAll(`<${i.name}>`, `${i.name}`);
   }
-  return msg
-}
+  return msg;
+};
 
-// TODO: 当时写的时候没想太明白，应该写成tsx的
-const bbsMessageSolve = (i: LogItem) => {
-  const options = Object.assign({}, store.exportOptions)
-  options.imageHide = true;
-  if (store.isHiddenLogItem(i)) return '';
-
-  let msg = msgImageFormat(escapeHTML(i.message), options);
-  msg = msgAtFormat(msg, store.pcList);
-  msg = msgOffTopicFormat(msg, store.exportOptions, i.isDice);
-  msg = msgCommandFormat(msg, store.exportOptions);
-  msg = msgIMUseridFormat(msg, store.exportOptions, i.isDice);
-  msg = msgOffTopicFormat(msg, store.exportOptions, i.isDice); // 再过滤一次
-
-  if (i.isDice) {
-    msg = nameReplace(msg)
+const normalizedMessage = computed(() => {
+  const source = props.source as LogItem;
+  let msg = formatLogMessage(source.message || '', store.exportOptions, store.pcList, source.isDice, true, { imageHide: true });
+  if (source.isDice) {
+    msg = nameReplace(msg);
   }
+  return msg.trim();
+});
+
+const renderedMessage = computed(() => {
+  const source = props.source as LogItem;
+  const msg = normalizedMessage.value;
+  if (!msg) return '';
+
   if (store.bbsUseSpaceWithMultiLine) {
     const toSpace = (text: string) => {
       const lst: string[] = [];
@@ -103,11 +95,12 @@ const bbsMessageSolve = (i: LogItem) => {
       }
       lst.push('&nbsp;');
       return lst.join('');
-      // return '&ensp;'.repeat(text.length + 1); // 这里总是有一个前置空格
-    }
-    return msg.trim().replaceAll('<br />', '\n').replaceAll('\n', '<br/><span class="lf">\n</span>' + (!store.exportOptions.timeHide ? `<span style='color:#aaa'>${toSpace(timeSolve(i))}</span>` : '&ensp;') + escapeHTML(nicknameSolve(i)))
-    // return msg.trim().replaceAll('<br />', '\n').replaceAll('\n', '<br/><span class="lf">\n</span>' + (!store.exportOptions.timeHide ? `<span style='color:#aaa'>${toSpace('[color=#aaaaaa]' + timeSolve(i) + '[/color]')}</span>` : '') + '&ensp;'.repeat(`[color=${colorByName(i)}]`.length) + nicknameSolve(i))
+    };
+    return msg.replaceAll('<br />', '\n').replaceAll('\n', '<br/><span class="lf">\n</span>' + (!store.exportOptions.timeHide ? `<span style='color:#aaa'>${toSpace(timeSolve(source))}</span>` : '&ensp;') + escapeHTML(nicknameSolve(source)));
   }
-  return msg.trim().replaceAll('<br />', '\n').replaceAll('\n', '[/color]<br/><span class="lf">\n</span>' + (!store.exportOptions.timeHide ? `<span style='color:#aaa'>[color=${getTimeColor()}]${timeSolve(i)}[/color]</span>` : '') + `[color=${colorByName(i)}] ` + escapeHTML(nicknameSolve(i)))
-}
+
+  return msg.replaceAll('<br />', '\n').replaceAll('\n', '[/color]<br/><span class="lf">\n</span>' + (!store.exportOptions.timeHide ? `<span style='color:#aaa'>[color=${getTimeColor()}]${timeSolve(source)}[/color]</span>` : '') + `[color=${colorByName(source)}] ` + escapeHTML(nicknameSolve(source)));
+});
+
+const shouldRender = computed(() => normalizedMessage.value !== '');
 </script>

@@ -322,7 +322,7 @@ import PreviewItem from './components/previews/preview-main-item.vue'
 import PreviewTableTR from './components/previews/preview-table-tr.vue'
 import { LogItem, CharItem, packNameId } from "./logManager/types";
 import { setCharInfo } from './logManager/importers/_logImpoter'
-import { msgCommandFormat, msgImageFormat, msgIMUseridFormat, msgOffTopicFormat, msgAtFormat } from "./utils";
+import { expandForwardLogItem, formatLogMessage, msgOffTopicFormat } from "./utils";
 import { NButton, NText, useMessage, useModal, useNotification, NDrawer, NDrawerContent, NFloatButton, NTabs, NTabPane, NGrid, NGridItem, NAlert } from "naive-ui";
 import { User, LogoGithub, Delete as IconDelete, Settings, Menu, Video as IconVideo, ArrowRight as IconArrowRight, ChartLine as IconChart, DocumentPdf as IconDocumentPdf } from '@vicons/carbon'
 import { breakpointsTailwind, useBreakpoints, useDark, useToggle } from '@vueuse/core'
@@ -423,12 +423,17 @@ const backV1 = () => {
   location.href = 'https://dice.weizaima.com';
 }
 
+const getToolboxLogs = () => {
+  showPreview();
+  return previewItems.value;
+}
+
 const openVnve = () => {
   // 不使用 rebuildAll()，因为它会清空 lastText 并触发重新解析，
   // 从而导致用户在角色分配中的修改被覆盖
-  showPreview();
+  const toolboxLogs = getToolboxLogs();
   const data = {
-    logs: previewItems.value,
+    logs: toolboxLogs,
     characters: store.pcList
   };
   localStorage.setItem('vnve_import_data', JSON.stringify(data));
@@ -437,7 +442,7 @@ const openVnve = () => {
   let scriptText = "标题\场景1-1\n\n";
   scriptText += "场景\n默认背景\n\n";
 
-  for (const item of previewItems.value) {
+  for (const item of toolboxLogs) {
       if (store.isHiddenLogItem(item)) continue;
       
       const name = item.nickname || "未知";
@@ -457,9 +462,9 @@ const openVnve = () => {
 
 const openKpiReviewer = () => {
   // 不使用 rebuildAll()，避免覆盖用户的角色分配修改
-  showPreview();
+  const toolboxLogs = getToolboxLogs();
   const data = {
-    logs: logMan.curItems,
+    logs: toolboxLogs,
     characters: store.pcList
   };
   localStorage.setItem('kpi_data', JSON.stringify(data));
@@ -468,9 +473,9 @@ const openKpiReviewer = () => {
 
 const openPdfPrinter = () => {
   // 不使用 rebuildAll()，避免覆盖用户的角色分配修改
-  showPreview();
+  const toolboxLogs = getToolboxLogs();
   const data = {
-    logs: logMan.curItems,
+    logs: toolboxLogs,
     characters: store.pcList,
     options: store.exportOptions
   };
@@ -509,21 +514,18 @@ const previewClick = (mode: 'preview' | 'role' | 'bbs' | 'bbspineapple' | 'trg')
       isShowPreviewBBSPineapple.value = false
       isShowPreviewTRG.value = false
       isShowPreviewRole.value = false
-      store.exportOptions.imageHide = true
       break;
     case 'bbspineapple':
       isShowPreview.value = false
       isShowPreviewBBS.value = false
       isShowPreviewTRG.value = false
       isShowPreviewRole.value = false
-      store.exportOptions.imageHide = true
       break;
     case 'trg':
       isShowPreview.value = false
       isShowPreviewBBS.value = false
       isShowPreviewBBSPineapple.value = false
       isShowPreviewRole.value = false
-      store.exportOptions.imageHide = true
       break;
   }
   showPreview();
@@ -942,13 +944,40 @@ function exportRecordDocx() {
 
 const previewItems = ref<LogItem[]>([])
 
+function buildPreviewSourceItems() {
+  const items: LogItem[] = [];
+
+  for (const item of logMan.curItems) {
+    if (item.isRaw) continue;
+    if (!store.exportOptions.expandForward) {
+      items.push(item);
+      continue;
+    }
+
+    const expanded = expandForwardLogItem(item);
+    if (expanded?.length) {
+      items.push(...expanded);
+    } else {
+      items.push(item);
+    }
+  }
+
+  return items;
+}
+
 function showPreview() {
   const tmp: LogItem[] = [];
   let index = 0;
-  const offTopicHide = store.exportOptions.offTopicHide;
+  const sourceItems = buildPreviewSourceItems();
   console.log('当前日志条目数量: ', logMan.curItems.length)
 
-  for (let i of logMan.curItems) {
+  const charInfo = new Map<string, CharItem>();
+  for (const item of sourceItems) {
+    setCharInfo(charInfo, item);
+  }
+  store.updatePcList(charInfo);
+
+  for (let i of sourceItems) {
     if (i.isRaw) continue;
     if (store.isHiddenLogItem(i)) continue;
 
@@ -957,16 +986,11 @@ function showPreview() {
     //   const msg = i.message.replaceAll(/^[(（].+?$/gm, '') // 【
     //   if (msg.trim() === '') continue;
     // }
-    let msg = msgImageFormat(i.message, store.exportOptions);
-    msg = msgAtFormat(msg, store.pcList);
-    msg = msgOffTopicFormat(msg, store.exportOptions, i.isDice);
-    msg = msgCommandFormat(msg, store.exportOptions);
-    msg = msgIMUseridFormat(msg, store.exportOptions, i.isDice);
+    let msg = formatLogMessage(i.message, store.exportOptions, store.pcList, i.isDice);
     msg = msgOffTopicFormat(msg, store.exportOptions, i.isDice); // 再过滤一次
     if (msg.trim() === '') continue;
 
-    i.index = index;
-    tmp.push(i);
+    tmp.push({ ...i, index });
     index += 1;
   }
   previewItems.value = tmp;

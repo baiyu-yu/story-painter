@@ -1103,6 +1103,12 @@ export const PDFDocument = ({ data, settings }: { data: LogItem[], settings: PDF
         yearHide: true,
         textIndentAll: false,
         textIndentFirst: true,
+        expandForward: false,
+        filterCqForward: false,
+        filterCqImage: false,
+        filterCqAt: false,
+        filterCqReply: false,
+        filterCqJson: false,
     } as any;
 
     // Memoize formatMessage to avoid re-running on every render if inputs haven't changed
@@ -1113,7 +1119,7 @@ export const PDFDocument = ({ data, settings }: { data: LogItem[], settings: PDF
         const withImage = { ...options, imageHide: true };
         // Remove escapeHTML to fix double escaping issue in PDF
         let msg = msgImageFormat(String(log.message || ''), withImage, false);
-        msg = msgAtFormat(msg, (settings.characters as any) || []);
+        msg = msgAtFormat(msg, (settings.characters as any) || [], options);
         msg = msgOffTopicFormat(msg, options, !!log.isDice);
         msg = msgCommandFormat(msg, options);
         msg = msgIMUseridFormat(msg, options, !!log.isDice);

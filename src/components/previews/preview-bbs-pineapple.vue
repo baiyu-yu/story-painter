@@ -30,7 +30,7 @@ import { useMessage } from 'naive-ui';
 // @ts-ignore
 import VirtualList from 'vue3-virtual-scroll-list';
 import Item from './preview-bbs-pineapple-item.vue';
-import { escapeHTML, msgAtFormat, msgCommandFormat, msgImageFormat, msgIMUseridFormat, msgOffTopicFormat } from '~/utils';
+import { formatLogMessage } from '~/utils';
 
 const props = defineProps<{
   isShow: boolean,
@@ -76,13 +76,7 @@ const nicknameSolve = (item: LogItem) => {
   return `<${item.nickname}${userId}>`;
 };
 const normalizeMessage = (item: LogItem) => {
-  const options = { ...store.exportOptions, imageHide: true };
-  let msg = msgImageFormat(escapeHTML(item.message), options);
-  msg = msgAtFormat(msg, store.pcList);
-  msg = msgOffTopicFormat(msg, store.exportOptions, item.isDice);
-  msg = msgCommandFormat(msg, store.exportOptions);
-  msg = msgIMUseridFormat(msg, store.exportOptions, item.isDice);
-  msg = msgOffTopicFormat(msg, store.exportOptions, item.isDice);
+  let msg = formatLogMessage(item.message, store.exportOptions, store.pcList, item.isDice, true, { imageHide: true });
   if (item.isDice) {
     msg = nameReplace(msg);
   }
@@ -142,8 +136,6 @@ const formattedItems = computed(() => {
 });
 watch(() => props.isShow, (val) => {
   if (!val) return;
-  store.exportOptions.imageHide = true;
-
   nextTick(() => {
     if (clip) return;
     clip = new ClipboardJS('#btnCopyPreviewBBSPineapple', {

@@ -42,7 +42,7 @@ export class QQExportLogImporter extends LogImporter {
         }
 
         const item = {} as LogItem;
-        item.IMUserId = 'QQ:' + m[3].slice(1, -1);
+        item.IMUserId = m[3].slice(1, -1);
         item.nickname = m[2];
         this.setCharInfo(charInfo, item);
         item.time = dayjs(m[1]).unix();
